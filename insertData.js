@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const db = require('./database');
+require('./database'); // Connect to MongoDB
 const User = require('./models/User');
 const Course = require('./models/Course');
 const Module = require('./models/Module');
