@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
 
+const mongoose = require('mongoose');
 const dbUri = 'mongodb://localhost:27017/csisproject';
 
 mongoose.connect(dbUri, {
