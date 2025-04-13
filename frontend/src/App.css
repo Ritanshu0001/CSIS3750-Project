@@ -1,38 +1,196 @@
-.App {
-  text-align: center;
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #fabe2c;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.app {
+  padding: 0 60px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.navbar {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40px 0;
+}
+
+.logo {
+  font-size: 28px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 30px;
+  align-items: center;
+  margin: 0;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: black;
+  font-weight: 500;
+  font-size: 17px;
+}
+
+.signin-outline {
+  padding: 10px 22px;
+  border: 2px solid black;
+  background: transparent;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.hero {
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px + 2vmin);
+  gap: 40px;
+  padding: 80px 0;
+}
+
+.hero-left img {
+  max-width: 100%;
+  width: 600px;
+  height: auto;
+}
+
+.hero-right {
+  max-width: 500px;
+}
+
+.hero-right h1 {
+  font-size: 48px;
+  margin-bottom: 20px;
+  line-height: 1.2;
+}
+
+.hero-right p {
+  font-size: 20px;
+  margin-bottom: 30px;
+}
+
+.signin-filled {
+  padding: 14px 36px;
+  background-color: black;
   color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 17px;
+  box-shadow: 3px 4px 0 #00000044;
+  transition: transform 0.1s ease;
 }
 
-.App-link {
-  color: #61dafb;
+.signin-filled:hover {
+  transform: translateY(-1px);
+  background-color: #222;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.quote {
+  margin-top: 80px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 18px;
+}
+
+.signin-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px;
+  gap: 100px;
+  max-width: 1300px;
+  margin: auto;
+}
+
+.signin-left img {
+  width: 320px;
+  height: auto;
+}
+
+.signin-right input {
+  width: 100%;
+  padding: 15px;
+  border-radius: 20px;
+  border: none;
+  margin-bottom: 20px;
+  font-size: 16px;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+  outline: none;           /* 🔥 This removes the extra black outline */
+  box-sizing: border-box;  /* Prevents stretching from padding */
+}
+
+
+.signin-icon {
+  font-size: 42px;
+  margin-bottom: 40px;
+}
+
+.signin-right h2 {
+  font-size: 24px;
+  margin-bottom: 30px;
+}
+
+.signin-right input {
+  width: 100%;
+  padding: 15px;
+  border-radius: 20px;
+  border: none;
+  margin-bottom: 20px;
+  font-size: 16px;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+}
+
+.signin-filled {
+  padding: 14px 36px;
+  background-color: black;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 25px;
+  font-size: 16px;
+  cursor: pointer;
+  box-shadow: 3px 4px 0 #00000044;
+  margin-top: 10px;
+}
+
+.signup-text {
+  margin-top: 20px;
+  font-size: 14px;
+}
+
+.password-field {
+  position: relative;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.password-field input {
+  width: 100%;
+  padding: 15px;
+  border-radius: 20px;
+  border: none;
+  font-size: 16px;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+  outline: none;
+  box-sizing: border-box;
+  padding-right: 45px; /* Make space for the icon */
+}
+
+.quote {
+  margin-top: 80px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 18px;
 }
