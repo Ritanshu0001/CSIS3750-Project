@@ -104,12 +104,12 @@ def student_dashboard(student_id):
     try:
         student_obj_id = ObjectId(student_id)
     except Exception:
-        abort(400, description="Invalid student ID format.")
+        return jsonify(description="Invalid student ID format."), 400
 
     # Get student profile
     student = mongo.db.students.find_one({"_id": student_obj_id})
     if not student:
-        abort(404, description="Student not found.")
+        return jsonify(description="Student not found."), 404
 
     # Retrieve courses where the student is enrolled.
     # Here, we assume that each course document has a field "student_ids" which is a list of ObjectId
@@ -149,21 +149,21 @@ def student_profile(student_id):
     try:
         student_obj_id = ObjectId(student_id)
     except Exception:
-        abort(400, description="Invalid student ID format.")
+        return jsonify(description="Invalid student ID format."), 400
 
     if request.method == 'GET':
         student = mongo.db.students.find_one({"_id": student_obj_id})
         if not student:
-            abort(404, description="Student not found.")
+            return jsonify(description="Student not found."), 404
         return jsonify(serialize_doc(student))
 
     elif request.method == 'PUT':
         data = request.json
         if not data:
-            abort(400, description="No data provided.")
+            return jsonify(description="No data provided."), 400
         result = mongo.db.students.update_one({"_id": student_obj_id}, {"$set": data})
         if result.matched_count == 0:
-            abort(404, description="Student not found.")
+            return jsonify(description="Student not found."), 404
         return jsonify({"status": "Profile updated"})
 
 
@@ -175,7 +175,7 @@ def student_courses(student_id):
     try:
         student_obj_id = ObjectId(student_id)
     except Exception:
-        abort(400, description="Invalid student ID format.")
+        return jsonify(description="Invalid student ID format."), 400
 
     courses = list(mongo.db.courses.find({"student_ids": student_obj_id}))
     courses = [serialize_doc(course) for course in courses]
@@ -190,7 +190,7 @@ def student_assignments(student_id):
     try:
         student_obj_id = ObjectId(student_id)
     except Exception:
-        abort(400, description="Invalid student ID format.")
+        return jsonify(description="Invalid student ID format."), 400
 
     # Find courses for the student
     raw_courses = list(mongo.db.courses.find({"student_ids": student_obj_id}))
@@ -210,7 +210,7 @@ def student_notifications(student_id):
     try:
         student_obj_id = ObjectId(student_id)
     except Exception:
-        abort(400, description="Invalid student ID format.")
+        return jsonify(description="Invalid student ID format."), 400
 
     notifications = list(mongo.db.notifications.find({"student_ids": student_obj_id}))
     notifications = [serialize_doc(notification) for notification in notifications]
