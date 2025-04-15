@@ -1,4 +1,6 @@
 from functools import wraps
+
+import pymongo
 from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 from werkzeug.security import check_password_hash
@@ -83,11 +85,7 @@ def login():
 
 
 def serialize_doc(doc):
-    """
-    Convert MongoDB documents to JSON-serializable dictionaries by converting ObjectId fields to strings.
-    """
     doc['_id'] = str(doc['_id'])
-    # Convert nested ObjectId fields if present (e.g., 'student_id')
     if 'student_id' in doc:
         doc['student_id'] = str(doc['student_id'])
     return doc
@@ -133,18 +131,16 @@ def student_dashboard(student_id):
     return jsonify(dashboard_data)
 
 
-@app.route('/api/student/<student_id>/profile', methods=['GET', 'PUT'])
-def student_profile(student_id):
-    try:
-        student_obj_id = ObjectId(student_id)
-    except Exception:
-        return jsonify({"error": "Invalid student ID format."}), 400
+@app.route('/test/users/<string:user>', methods=['GET', 'PUT'])
+def student_profile(user):
+    client = pymongo.MongoClient("mongodb+srv://nweikl:qyQrov-gyxsi1-dejtov@csis3750.auwttdg.mongodb.net/csis3750_db?retryWrites=true&w=majority&appName=csis3750")
+    db = client["test"]
 
     if request.method == 'GET':
-        student = mongo.db.students.find_one({"_id": student_obj_id})
-        if not student:
+        user = db.users.find_one({"user": user})
+        if not user:
             return jsonify({"error": "Student not found."}), 404
-        return jsonify(serialize_doc(student))
+        return jsonify(serialize_doc(user))
 
     elif request.method == 'PUT':
         data = request.json
