@@ -10,15 +10,18 @@ import datetime
 
 app = Flask(__name__)
 
-app.config["MONGO_URI"] = "mongodb+srv://nweikl:qyQrov-gyxsi1-dejtov@csis3750.auwttdg.mongodb.net/csis3750_db?retryWrites=true&w=majority&appName=csis3750"
-app.config["SECRET_KEY"] = "your_secret_key_here"
+# app.config["MONGO_URI"] = "mongodb+srv://nweikl:qyQrov-gyxsi1-dejtov@csis3750.auwttdg.mongodb.net/csis3750_db?retryWrites=true&w=majority&appName=csis3750"
+# app.config["SECRET_KEY"] = "your_secret_key_here"
+#
+# mongo = PyMongo(app)
+# db = db
 
-mongo = PyMongo(app)
-db = mongo.db
+client = pymongo.MongoClient("mongodb+srv://nweikl:qyQrov-gyxsi1-dejtov@csis3750.auwttdg.mongodb.net/csis3750_db?retryWrites=true&w=majority&appName=csis3750")
+db = client["test"]
 
 
 try:
-    mongo.cx.admin.command('ping')
+    db.cx.admin.command('ping')
     print("Pinged your deployment. You successfully connected to MongoDB!")
 except Exception as e:
     print(e)
@@ -72,7 +75,7 @@ def login():
     if not username or not password:
         return jsonify({"error": "Missing username or password"}), 400
 
-    user = mongo.db.users.find_one({"username": username})
+    user = db.users.find_one({"user": username})
     if not user or not check_password_hash(user['password'], password):
         return jsonify({"error": "Invalid username or password"}), 401
 
@@ -103,23 +106,23 @@ def student_dashboard(student_id):
         return jsonify({"error": "Invalid student ID format."}), 400
 
     # Retrieve student profile
-    student = mongo.db.students.find_one({"_id": student_obj_id})
+    student = db.students.find_one({"_id": student_obj_id})
     if not student:
         return jsonify({"error": "Student not found."}), 404
 
     # Retrieve courses where the student is enrolled (assumes courses have a "student_ids" field)
-    raw_courses = list(mongo.db.courses.find({"student_ids": student_obj_id}))
+    raw_courses = list(db.courses.find({"student_ids": student_obj_id}))
     courses = [serialize_doc(course) for course in raw_courses]
 
     # Extract course IDs (keep original ObjectId values) to query assignments
     course_ids = [course['_id'] for course in raw_courses]
 
     # Retrieve assignments for these courses (each assignment document has a "course_id" field)
-    assignments = list(mongo.db.assignments.find({"course_id": {"$in": course_ids}}))
+    assignments = list(db.assignments.find({"course_id": {"$in": course_ids}}))
     assignments = [serialize_doc(assignment) for assignment in assignments]
 
     # Retrieve notifications for the student (assumes notifications have a "student_ids" field)
-    notifications = list(mongo.db.notifications.find({"student_ids": student_obj_id}))
+    notifications = list(db.notifications.find({"student_ids": student_obj_id}))
     notifications = [serialize_doc(notification) for notification in notifications]
 
     dashboard_data = {
@@ -133,8 +136,6 @@ def student_dashboard(student_id):
 
 @app.route('/test/users/<string:user>', methods=['GET', 'PUT'])
 def student_profile(user):
-    client = pymongo.MongoClient("mongodb+srv://nweikl:qyQrov-gyxsi1-dejtov@csis3750.auwttdg.mongodb.net/csis3750_db?retryWrites=true&w=majority&appName=csis3750")
-    db = client["test"]
 
     if request.method == 'GET':
         user = db.users.find_one({"user": user})
@@ -146,7 +147,7 @@ def student_profile(user):
         data = request.json
         if not data:
             return jsonify({"error": "No data provided."}), 400
-        result = mongo.db.students.update_one({"_id": student_obj_id}, {"$set": data})
+        result = db.students.update_one({"user": user}, {"$set": data})
         if result.matched_count == 0:
             return jsonify({"error": "Student not found."}), 404
         return jsonify({"status": "Profile updated"})
@@ -159,7 +160,7 @@ def student_courses(student_id):
     except Exception:
         return jsonify({"error": "Invalid student ID format."}), 400
 
-    courses = list(mongo.db.courses.find({"student_ids": student_obj_id}))
+    courses = list(db.courses.find({"student_ids": student_obj_id}))
     courses = [serialize_doc(course) for course in courses]
     return jsonify(courses)
 
@@ -171,9 +172,9 @@ def student_assignments(student_id):
     except Exception:
         return jsonify({"error": "Invalid student ID format."}), 400
 
-    raw_courses = list(mongo.db.courses.find({"student_ids": student_obj_id}))
+    raw_courses = list(db.courses.find({"student_ids": student_obj_id}))
     course_ids = [course['_id'] for course in raw_courses]
-    assignments = list(mongo.db.assignments.find({"course_id": {"$in": course_ids}}))
+    assignments = list(db.assignments.find({"course_id": {"$in": course_ids}}))
     assignments = [serialize_doc(assignment) for assignment in assignments]
     return jsonify(assignments)
 
@@ -185,7 +186,7 @@ def student_notifications(student_id):
     except Exception:
         return jsonify({"error": "Invalid student ID format."}), 400
 
-    notifications = list(mongo.db.notifications.find({"student_ids": student_obj_id}))
+    notifications = list(db.notifications.find({"student_ids": student_obj_id}))
     notifications = [serialize_doc(notification) for notification in notifications]
     return jsonify(notifications)
 
@@ -207,7 +208,7 @@ def student_todo(student_id):
 
     if request.method == 'GET':
         # Retrieve all to-do items that belong to the student
-        todos = list(mongo.db.todos.find({"student_id": student_obj_id}))
+        todos = list(db.todos.find({"student_id": student_obj_id}))
         todos = [serialize_doc(todo) for todo in todos]
         return jsonify(todos)
 
@@ -226,7 +227,7 @@ def student_todo(student_id):
             "description": data.get("description"),
             "completed": data.get("completed", False)
         }
-        result = mongo.db.todos.insert_one(new_todo)
+        result = db.todos.insert_one(new_todo)
         new_todo['_id'] = str(result.inserted_id)
         new_todo['student_id'] = str(new_todo['student_id'])
         return jsonify(new_todo), 201
@@ -245,7 +246,7 @@ def modify_todo(student_id, todo_id):
         return jsonify({"error": "Invalid ID format."}), 400
 
     # Ensure the to-do item belongs to the student.
-    todo = mongo.db.todos.find_one({"_id": todo_obj_id, "student_id": student_obj_id})
+    todo = db.todos.find_one({"_id": todo_obj_id, "student_id": student_obj_id})
     if not todo:
         return jsonify({"error": "To-do item not found for the specified student."}), 404
 
@@ -258,12 +259,12 @@ def modify_todo(student_id, todo_id):
         update_data = {field: data[field] for field in allowed_fields if field in data}
         if not update_data:
             return jsonify({"error": "No valid fields provided for update."}), 400
-        mongo.db.todos.update_one({"_id": todo_obj_id}, {"$set": update_data})
-        updated_todo = mongo.db.todos.find_one({"_id": todo_obj_id})
+        db.todos.update_one({"_id": todo_obj_id}, {"$set": update_data})
+        updated_todo = db.todos.find_one({"_id": todo_obj_id})
         return jsonify(serialize_doc(updated_todo))
 
     elif request.method == 'DELETE':
-        mongo.db.todos.delete_one({"_id": todo_obj_id})
+        db.todos.delete_one({"_id": todo_obj_id})
         return jsonify({"status": "To-do item deleted"})
 
 
@@ -281,7 +282,7 @@ def view_assignment(student_id, assignment_id):
     except Exception:
         return jsonify({"error": "Invalid ID format."}), 400
 
-    assignment = mongo.db.assignments.find_one({"_id": assignment_obj})
+    assignment = db.assignments.find_one({"_id": assignment_obj})
     if not assignment:
         return jsonify({"error": "Assignment not found."}), 404
 
@@ -306,7 +307,7 @@ def submit_assignment(student_id, assignment_id):
         "content": data.get("content"),
         "submitted_at": datetime.utcnow().isoformat() + "Z"
     }
-    result = mongo.db.submissions.insert_one(submission)
+    result = db.submissions.insert_one(submission)
     submission['_id'] = str(result.inserted_id)
     submission['student_id'] = str(submission['student_id'])
     submission['assignment_id'] = str(submission['assignment_id'])
@@ -321,10 +322,10 @@ def view_quizzes(student_id):
         return jsonify({"error": "Invalid student ID format."}), 400
 
     # Retrieve courses the student is enrolled in to determine relevant quizzes.
-    courses = list(mongo.db.courses.find({"student_ids": student_obj}))
+    courses = list(db.courses.find({"student_ids": student_obj}))
     course_ids = [course['_id'] for course in courses]
 
-    quizzes = list(mongo.db.quizzes.find({"course_id": {"$in": course_ids}}))
+    quizzes = list(db.quizzes.find({"course_id": {"$in": course_ids}}))
     quizzes = [serialize_doc(quiz) for quiz in quizzes]
     return jsonify(quizzes)
 
@@ -337,7 +338,7 @@ def view_quiz(student_id, quiz_id):
     except Exception:
         return jsonify({"error": "Invalid ID format."}), 400
 
-    quiz = mongo.db.quizzes.find_one({"_id": quiz_obj})
+    quiz = db.quizzes.find_one({"_id": quiz_obj})
     if not quiz:
         return jsonify({"error": "Quiz not found."}), 404
 
@@ -362,7 +363,7 @@ def submit_quiz(student_id, quiz_id):
         "answers": data.get("answers"),  # Expected to be a dict or list of answers.
         "submitted_at": datetime.utcnow().isoformat() + "Z"
     }
-    result = mongo.db.quiz_submissions.insert_one(submission)
+    result = db.quiz_submissions.insert_one(submission)
     submission['_id'] = str(result.inserted_id)
     submission['student_id'] = str(submission['student_id'])
     submission['quiz_id'] = str(submission['quiz_id'])
@@ -377,10 +378,10 @@ def view_announcements(student_id):
         return jsonify({"error": "Invalid student ID format."}), 400
 
     # Retrieve the student's courses to fetch relevant announcements.
-    courses = list(mongo.db.courses.find({"student_ids": student_obj}))
+    courses = list(db.courses.find({"student_ids": student_obj}))
     course_ids = [course['_id'] for course in courses]
 
-    announcements = list(mongo.db.announcements.find({"course_id": {"$in": course_ids}}))
+    announcements = list(db.announcements.find({"course_id": {"$in": course_ids}}))
     announcements = [serialize_doc(announcement) for announcement in announcements]
     return jsonify(announcements)
 
