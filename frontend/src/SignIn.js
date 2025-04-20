@@ -1,14 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import { useNavigate } from 'react-router-dom';
 
-function SignIn() {
+function SignIn({ setIsLoggedIn }) {
   const navigate = useNavigate();
+  const [university, setUniversity] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSignIn = (e) => {
+  const handleSignIn = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    navigate('/verify');
+    try {
+      const res = await fetch('/signin', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ university, email, password })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        // Optionally store a JWT: localStorage.setItem('token', data.token);
+        setIsLoggedIn(true);
+        navigate('/verify');
+      } else {
+        alert(data.error || 'Login failed. Please check your credentials.');
+      }
+    } catch (err) {
+      console.log(err);
+      alert('Server error. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -21,20 +46,44 @@ function SignIn() {
         <div className="signin-icon">🎓</div>
         <h2>Sign in</h2>
 
-        <input type="text" placeholder="College name:" />
-        <input type="email" placeholder="Email:" />
+        <form onSubmit={handleSignIn}>
+          <input
+            type="text"
+            placeholder="University name:"
+            value={university}
+            onChange={(e) => setUniversity(e.target.value)}
+            required
+          />
 
-        <div className="password-field">
-          <input type="password" placeholder="Password:" />
-        </div>
+          <input
+            type="email"
+            placeholder="Email:"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
 
-        <button className="signin-filled" onClick={handleSignIn}>
-          Sign in ➤
-        </button>
+          <div className="password-field">
+            <input
+              type="password"
+              placeholder="Password:"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+
+          <button
+            className="signin-filled"
+            type="submit"
+            disabled={loading}
+          >
+            {loading ? 'Signing in…' : 'Sign in ➤'}
+          </button>
+        </form>
       </div>
     </div>
   );
 }
-
 
 export default SignIn;

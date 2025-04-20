@@ -10,11 +10,23 @@ import datetime
 
 app = Flask(__name__)
 
+
+@app.after_request
+def after_request(response):
+    # Allow your React app's origin OR use "*" to allow all
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+    # Which methods are allowed
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    # Which headers can be sent (include Authorization if you use JWT)
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+    return response
+
 # app.config["MONGO_URI"] = "mongodb+srv://nweikl:qyQrov-gyxsi1-dejtov@csis3750.auwttdg.mongodb.net/csis3750_db?retryWrites=true&w=majority&appName=csis3750"
 # app.config["SECRET_KEY"] = "your_secret_key_here"
 #
 # mongo = PyMongo(app)
 # db = db
+
 
 client = pymongo.MongoClient("mongodb+srv://nweikl:qyQrov-gyxsi1-dejtov@csis3750.auwttdg.mongodb.net/csis3750_db?retryWrites=true&w=majority&appName=csis3750")
 db = client["test"]
@@ -66,25 +78,35 @@ def token_required(f):
     return decorated
 
 
-@app.route('/signin', methods=['POST'])
+@app.route('/signin', methods=['GET'])
 def login():
-    data = request.get_json() or {}
-    username = data.get('username')
+    data = request.get_json(force=True)
+    university = data.get('university')
+    email = data.get('email')
     password = data.get('password')
 
-    if not username or not password:
-        return jsonify({"error": "Missing username or password"}), 400
+    if not all([university, email, password]):
+        return jsonify({"error": "university, email, and password are required"}), 400
 
-    user = db.users.find_one({"user": username})
-    if not user or not check_password_hash(user['password'], password):
-        return jsonify({"error": "Invalid username or password"}), 401
+    # Look up the user by university + email
+    user = db.users.find_one({
+        "university": university,
+        "email": email
+    })
+    if not user:
+        return jsonify({"error": "Invalid credentials"}), 401
 
-    token = jwt.encode({
-        'username': username,
-        'exp': datetime.datetime.now(datetime.UTC) + datetime.timedelta(hours=1)
-    }, app.config['SECRET_KEY'], algorithm='HS256')
+    # Plaintext check
+    stored_pw = user.get('password')  # assumes your documents have a 'password' field
+    if stored_pw != password:
+        return jsonify({"error": "Invalid credentials"}), 401
 
-    return jsonify({'token': token})
+    # Success
+    return jsonify({
+        "message": "Login successful",
+        "student_id": str(user['_id'])
+    }), 200
+
 
 
 def serialize_doc(doc):
