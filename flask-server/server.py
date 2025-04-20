@@ -1,11 +1,10 @@
 from functools import wraps
-
 import pymongo
 from flask import Flask, request, jsonify
-from flask_pymongo import PyMongo
-from werkzeug.security import check_password_hash
+# from flask_pymongo import PyMongo
+# from werkzeug.security import check_password_hash
 from bson.objectid import ObjectId
-import jwt
+# import jwt
 import datetime
 
 app = Flask(__name__)
@@ -33,7 +32,7 @@ db = client["test"]
 
 
 try:
-    db.cx.admin.command('ping')
+    client.admin.command('ping')
     print("Pinged your deployment. You successfully connected to MongoDB!")
 except Exception as e:
     print(e)
@@ -50,35 +49,35 @@ def parse_object_ids(document):
         return document
 
 
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        token = None
-        # Extract token from Authorization header
-        if 'Authorization' in request.headers:
-            auth_header = request.headers['Authorization']
-            if auth_header.startswith("Bearer "):
-                token = auth_header[7:]
+# def token_required(f):
+#     @wraps(f)
+#     def decorated(*args, **kwargs):
+#         token = None
+#         # Extract token from Authorization header
+#         if 'Authorization' in request.headers:
+#             auth_header = request.headers['Authorization']
+#             if auth_header.startswith("Bearer "):
+#                 token = auth_header[7:]
+#
+#         if not token:
+#             return jsonify({"error": "Token is missing!"}), 401
+#
+#         try:
+#             # Decode token using the app secret
+#             # data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
+#             current_student = db.students.find_one({"_id": ObjectId(data["student_id"])})
+#             if not current_student:
+#                 raise Exception("Student not found")
+#         except Exception as e:
+#             return jsonify({"error": "Token is invalid!"}), 401
+#
+#         # Pass current_student to the route
+#         return f(current_student, *args, **kwargs)
+#
+#     return decorated
 
-        if not token:
-            return jsonify({"error": "Token is missing!"}), 401
 
-        try:
-            # Decode token using the app secret
-            data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
-            current_student = db.students.find_one({"_id": ObjectId(data["student_id"])})
-            if not current_student:
-                raise Exception("Student not found")
-        except Exception as e:
-            return jsonify({"error": "Token is invalid!"}), 401
-
-        # Pass current_student to the route
-        return f(current_student, *args, **kwargs)
-
-    return decorated
-
-
-@app.route('/signin', methods=['GET'])
+@app.route('/signin', methods=['POST'])
 def login():
     data = request.get_json(force=True)
     university = data.get('university')
@@ -86,7 +85,9 @@ def login():
     password = data.get('password')
 
     if not all([university, email, password]):
-        return jsonify({"error": "university, email, and password are required"}), 400
+        # return jsonify({"error": "university, email, and password are required"}), 400
+        print("Invalid data")
+        return jsonify({"error": "Invalid data"}), 401
 
     # Look up the user by university + email
     user = db.users.find_one({
@@ -94,19 +95,22 @@ def login():
         "email": email
     })
     if not user:
-        return jsonify({"error": "Invalid credentials"}), 401
+        # return jsonify({"error": "Invalid credentials"}), 401
+        print("User not found")
+        return jsonify({"error": "User not found"}), 401
 
     # Plaintext check
     stored_pw = user.get('password')  # assumes your documents have a 'password' field
     if stored_pw != password:
-        return jsonify({"error": "Invalid credentials"}), 401
+        # return jsonify({"error": "Invalid credentials"}), 401
+        print("Wrong password")
+        return jsonify({"error": "Wrong password"}), 401
 
     # Success
     return jsonify({
         "message": "Login successful",
         "student_id": str(user['_id'])
     }), 200
-
 
 
 def serialize_doc(doc):
@@ -310,6 +314,7 @@ def view_assignment(student_id, assignment_id):
 
     return jsonify(serialize_doc(assignment))
 
+
 # 2. Submitting an assignment.
 @app.route('/api/student/<student_id>/assignments/<assignment_id>/submission', methods=['POST'])
 def submit_assignment(student_id, assignment_id):
@@ -334,6 +339,7 @@ def submit_assignment(student_id, assignment_id):
     submission['student_id'] = str(submission['student_id'])
     submission['assignment_id'] = str(submission['assignment_id'])
     return jsonify(submission), 201
+
 
 # 3. Viewing available quizzes/tests.
 @app.route('/api/student/<student_id>/quizzes', methods=['GET'])
@@ -410,213 +416,4 @@ def view_announcements(student_id):
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-
-
-# @app.route('/student/home', methods=['GET'])
-# @token_required
-# def student_home(current_student):
-#     # Retrieve the list of class IDs the student is enrolled in
-#     student_class_ids = current_student.get("class_ids", [])
-# 
-#     # Convert the list of string IDs to ObjectId instances for the query
-#     try:
-#         object_ids = [ObjectId(cid) for cid in student_class_ids]
-#     except Exception as e:
-#         return jsonify({"error": "Invalid class IDs for student"}), 400
-# 
-#     # Query the classes collection to fetch the enrolled classes and their assignments
-#     classes = list(db.classes.find({"_id": {"$in": object_ids}}))
-#     classes = parse_object_ids(classes)
-# 
-#     return jsonify({"classes": classes}), 200
-
-
-# if __name__ == "__main__":
-#     app.run(debug=True)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# @app.route('/classes', methods=['POST'])
-# def create_class():
-#     """
-#     Endpoint to create a new class.
-#     Expected JSON payload:
-#       {
-#         "name": "Introduction to Math",
-#         "description": "Basic mathematics concepts"
-#       }
-#     """
-#     data = request.get_json()
-#     if not data or 'name' not in data:
-#         return jsonify({"error": "Missing required field: name"}), 400
-#
-#     class_doc = {
-#         "name": data["name"],
-#         "description": data.get("description", ""),
-#         "assignments": [],   # List to hold assignments for the class
-#         "attendance": [],    # List to hold attendance records
-#         "created_at": datetime.datetime.now(datetime.UTC),
-#     }
-#     result = db.classes.insert_one(class_doc)
-#     return jsonify({
-#         "message": "Class created successfully",
-#         "class_id": str(result.inserted_id)
-#     }), 201
-#
-#
-# @app.route('/classes/<class_id>/assignments', methods=['POST'])
-# def create_assignment(class_id):
-#     """
-#     Endpoint to add an assignment within an existing class.
-#     Expected JSON payload:
-#       {
-#         "title": "Homework 1",
-#         "description": "Algebra problems",
-#         "due_date": "2025-05-01"
-#       }
-#     """
-#     data = request.get_json()
-#     if not data or 'title' not in data:
-#         return jsonify({"error": "Missing required field: title"}), 400
-#
-#     # Create an assignment document with its own unique _id
-#     assignment = {
-#         "_id": ObjectId(),
-#         "title": data["title"],
-#         "description": data.get("description", ""),
-#         "due_date": data.get("due_date"),  # Ideally validated or parsed
-#         "grades": [],  # List to store grades for this assignment
-#         "created_at": datetime.datetime.now(datetime.UTC)
-#     }
-#
-#     result = db.classes.update_one(
-#         {"_id": ObjectId(class_id)},
-#         {"$push": {"assignments": assignment}}
-#     )
-#
-#     if result.modified_count == 0:
-#         return jsonify({"error": "Class not found"}), 404
-#
-#     return jsonify({
-#         "message": "Assignment added successfully",
-#         "assignment_id": str(assignment["_id"])
-#     }), 201
-#
-#
-# @app.route('/classes/<class_id>/assignments/<assignment_id>/grades', methods=['POST'])
-# def input_grade(class_id, assignment_id):
-#     """
-#     Endpoint to input a grade for a student on a specific assignment.
-#     Expected JSON payload:
-#       {
-#         "student_id": "student123",
-#         "grade": 95
-#       }
-#     """
-#     data = request.get_json()
-#     if not data or 'student_id' not in data or 'grade' not in data:
-#         return jsonify({"error": "Missing required fields: student_id and grade"}), 400
-#
-#     grade_record = {
-#         "student_id": data["student_id"],
-#         "grade": data["grade"],
-#         "graded_at": datetime.datetime.now(datetime.UTC)
-#     }
-#
-#     result = db.classes.update_one(
-#         {
-#             "_id": ObjectId(class_id),
-#             "assignments._id": ObjectId(assignment_id)
-#         },
-#         {
-#             "$push": {"assignments.$.grades": grade_record}
-#         }
-#     )
-#
-#     if result.modified_count == 0:
-#         return jsonify({"error": "Class or assignment not found"}), 404
-#
-#     return jsonify({"message": "Grade recorded successfully"}), 201
-#
-#
-# @app.route('/classes/<class_id>/attendance', methods=['POST'])
-# def mark_attendance(class_id):
-#     """
-#     Endpoint to mark attendance for a student in a class.
-#     Expected JSON payload:
-#       {
-#         "student_id": "student123",
-#         "date": "2025-04-15",  // Optional; defaults to today's date if not provided
-#         "status": "present"     // Optional; could be "present", "absent", etc.
-#       }
-#     """
-#     data = request.get_json()
-#     if not data or 'student_id' not in data:
-#         return jsonify({"error": "Missing required field: student_id"}), 400
-#
-#     attendance_record = {
-#         "student_id": data["student_id"],
-#         "date": data.get("date", datetime.datetime.now(datetime.UTC).date().isoformat()),
-#         "status": data.get("status", "present")
-#     }
-#
-#     result = db.classes.update_one(
-#         {"_id": ObjectId(class_id)},
-#         {"$push": {"attendance": attendance_record}}
-#     )
-#
-#     if result.modified_count == 0:
-#         return jsonify({"error": "Class not found"}), 404
-#
-#     return jsonify({"message": "Attendance recorded successfully"}), 201
-#
-#
-# @app.route('/classes', methods=['GET'])
-# def get_classes():
-#     """
-#     Endpoint to retrieve all classes. This is useful for debugging and administration.
-#     """
-#     classes = list(db.classes.find())
-#     classes = parse_object_ids(classes)
-#     return jsonify(classes), 200
-#
-#
-# @app.route('/classes/<class_id>', methods=['GET'])
-# def get_class(class_id):
-#     """
-#     Endpoint to retrieve a single class by its ID.
-#     """
-#     class_doc = db.classes.find_one({"_id": ObjectId(class_id)})
-#     if not class_doc:
-#         return jsonify({"error": "Class not found"}), 404
-#     class_doc = parse_object_ids(class_doc)
-#     return jsonify(class_doc), 200
-
-
 
