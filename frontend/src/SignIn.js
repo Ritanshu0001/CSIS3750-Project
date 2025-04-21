@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import './App.css';
 import { useNavigate } from 'react-router-dom';
 
-function SignIn({ setIsLoggedIn }) {
+function SignIn({ setAuth }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
 
@@ -10,8 +10,8 @@ function SignIn({ setIsLoggedIn }) {
     e.preventDefault();
 
     if (email.trim() === "jm6013") {
-      setIsLoggedIn(true); // ✅ Trigger login state
-      navigate('/verify');
+      setAuth(true); // ✅ set user as authenticated
+      navigate('/verification'); // ✅ correct route
     } else {
       alert("Invalid email. Please enter the correct email.");
     }

@@ -1,13 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import './MainPage.css';
+import { useNavigate } from 'react-router-dom';
 
 function MainPage() {
-  useEffect(() => {
-    const signInButton = document.querySelector('button');
-    if (signInButton && signInButton.textContent === 'Sign In') {
-      signInButton.textContent = 'Muhammad';
-    }
-  }, []);
+  const navigate = useNavigate();
 
   const courses = [
     { id: "CSIS 7777", title: "Task 2", details: ["Discuss both views", "Sample answer"], progress: "81.5%" },
@@ -18,6 +14,10 @@ function MainPage() {
     { id: "CSIS 7077", title: "Task 2", details: ["Discuss both views", "Sample answer"], progress: "81.5%" },
   ];
 
+  const handleClick = (id) => {
+    navigate(`/course/${id}`);
+  };
+
   return (
     <div className="main-page">
       <div className="page-container">
@@ -27,7 +27,7 @@ function MainPage() {
 
         <div className="courses-grid">
           {courses.map((course, i) => (
-            <div className="course-card" key={i}>
+            <div className="course-card" key={i} onClick={() => handleClick(course.id)}>
               <h3>{course.id}</h3>
               <ul>
                 <li>{course.title}</li>
@@ -40,7 +40,6 @@ function MainPage() {
         </div>
       </div>
 
-      {/* ✅ Footer with BrightBoard.edu */}
       <footer className="footer">brightboard.edu</footer>
     </div>
   );

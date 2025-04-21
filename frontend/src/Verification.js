@@ -2,14 +2,19 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Verification.css";
 
-function Verification() {
+function Verification({ setVerified }) {
   const [code, setCode] = useState("");
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Entered code:", code);
-    navigate("/main");
+
+    if (code.trim() === "1234") { // or whatever your verification code is
+      setVerified(true);          // ✅ update App state
+      navigate("/main");          // ✅ go to home
+    } else {
+      alert("Invalid verification code.");
+    }
   };
 
   return (
@@ -19,7 +24,6 @@ function Verification() {
         <img src="/verify_1.png" alt="Left illustration" className="side-img" />
       </div>
 
-    
       <div className="center-content">
         <div className="logo-icon">🎓</div>
         <h2>Verification</h2>
@@ -42,7 +46,6 @@ function Verification() {
         </form>
       </div>
 
-      
       <div className="img-wrapper right-img-wrapper">
         <img src="/verify_2.png" alt="Right illustration" className="side-img" />
       </div>
