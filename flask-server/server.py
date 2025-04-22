@@ -124,47 +124,27 @@ def serialize_doc(doc):
 # Endpoints for dashboard, profile, courses, assignments, and notifications.
 # ---------------------------------
 
-@app.route('/api/student/<student_id>/dashboard', methods=['GET'])
-def student_dashboard(student_id):
-    try:
-        student_obj_id = ObjectId(student_id)
-    except Exception:
-        return jsonify({"error": "Invalid student ID format."}), 400
-
-    # Retrieve student profile
-    student = db.students.find_one({"_id": student_obj_id})
-    if not student:
-        return jsonify({"error": "Student not found."}), 404
-
-    # Retrieve courses where the student is enrolled (assumes courses have a "student_ids" field)
-    raw_courses = list(db.courses.find({"student_ids": student_obj_id}))
-    courses = [serialize_doc(course) for course in raw_courses]
-
-    # Extract course IDs (keep original ObjectId values) to query assignments
-    course_ids = [course['_id'] for course in raw_courses]
-
-    # Retrieve assignments for these courses (each assignment document has a "course_id" field)
-    assignments = list(db.assignments.find({"course_id": {"$in": course_ids}}))
-    assignments = [serialize_doc(assignment) for assignment in assignments]
-
-    # Retrieve notifications for the student (assumes notifications have a "student_ids" field)
-    notifications = list(db.notifications.find({"student_ids": student_obj_id}))
-    notifications = [serialize_doc(notification) for notification in notifications]
-
-    dashboard_data = {
-        "student": serialize_doc(student),
-        "courses": courses,
-        "assignments": assignments,
-        "notifications": notifications
-    }
-    return jsonify(dashboard_data)
+# @app.route('/api/student/<string:username>/dashboard', methods=['GET'])
+# def student_dashboard(username):
+#     student = db.students.find_one({"username": username})
+#     if not student:
+#         return jsonify({"error": "Student not found."}), 404
+#
+#     courses = list(db.courses.find({"username": username}))
+#     courses = [serialize_doc(c) for c in courses]
+#
+#     # You can extend this to include assignments/notifications later
+#     return jsonify({
+#         "student": serialize_doc(student),
+#         "courses": courses
+#     })
 
 
-@app.route('/test/users/<string:user>', methods=['GET', 'PUT'])
-def student_profile(user):
+@app.route('/test/users/<string:username>', methods=['GET', 'PUT'])
+def student_profile(username):
 
     if request.method == 'GET':
-        user = db.users.find_one({"user": user})
+        user = db.users.find_one({"username": username})
         if not user:
             return jsonify({"error": "Student not found."}), 404
         return jsonify(serialize_doc(user))
@@ -173,22 +153,19 @@ def student_profile(user):
         data = request.json
         if not data:
             return jsonify({"error": "No data provided."}), 400
-        result = db.students.update_one({"user": user}, {"$set": data})
+        result = db.students.update_one({"user": username}, {"$set": data})
         if result.matched_count == 0:
             return jsonify({"error": "Student not found."}), 404
         return jsonify({"status": "Profile updated"})
 
 
-@app.route('/api/student/<student_id>/courses', methods=['GET'])
-def student_courses(student_id):
-    try:
-        student_obj_id = ObjectId(student_id)
-    except Exception:
-        return jsonify({"error": "Invalid student ID format."}), 400
-
-    courses = list(db.courses.find({"student_ids": student_obj_id}))
+@app.route('/test/courses/<string:username>', methods=['GET'])
+def get_courses_by_username(username):
+    courses = list(db.courses.find({"username": username}))
+    if not courses:
+        return jsonify({"error": "No courses found for user."}), 404
     courses = [serialize_doc(course) for course in courses]
-    return jsonify(courses)
+    return jsonify(courses), 200
 
 
 @app.route('/api/student/<student_id>/assignments', methods=['GET'])

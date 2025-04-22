@@ -7,7 +7,7 @@ function AccountPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:5000/test/users/jm6013')
+    fetch('/test/users/jm6013')
       .then((res) => {
         if (!res.ok) {
           throw new Error('Failed to fetch user');

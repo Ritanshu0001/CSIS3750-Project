@@ -22,7 +22,7 @@ function SignIn({ setIsLoggedIn }) {
       const data = await res.json();
 
       if (res.ok) {
-        // Optionally store a JWT: localStorage.setItem('token', data.token);
+        localStorage.setItem('username', 'jm6013');
         setIsLoggedIn(true);
         navigate('/verify');
       } else {
