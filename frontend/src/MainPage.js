@@ -10,7 +10,7 @@ function MainPage() {
     const username = localStorage.getItem('username');
     if (!username) return;
 
-    fetch(`http://localhost:5000/test/courses/${username}`)
+    fetch(`/test/courses/${username}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {

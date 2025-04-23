@@ -8,6 +8,7 @@ import MainPage from './MainPage';
 import AccountPage from './AccountPage';
 import Course from './Course';
 import StudentProfile from './StudentProfile';
+import ToDo from "./ToDo";
 
 function Navbar({ isLoggedIn }) {
   const location = useLocation();
@@ -21,6 +22,7 @@ function Navbar({ isLoggedIn }) {
         {!shouldHideLinks && (
           <>
             <li><Link to="/main">Home</Link></li>
+            <li><Link to="/todo">To-Do</Link></li>
             <li><Link to="/account">Account</Link></li>
           </>
         )}
@@ -54,6 +56,7 @@ function App() {
         <Route path="/account" element={<AccountPage />} />
         <Route path="/course/:username/:courseName" element={<Course />} />
         <Route path="/course/:courseName/students/:studentUsername" element={<StudentProfile />} />
+        <Route path="/todo" element={<ToDo/>}/>
       </Routes>
     </Router>
   );

@@ -17,7 +17,7 @@ export default function Course() {
 
   useEffect(() => {
     if (activeTab === 'Assignments') {
-      fetch(`http://localhost:5000/test/assignments/${username}/${encodeURIComponent(courseName)}`)
+      fetch(`/test/assignments/${username}/${encodeURIComponent(courseName)}`)
         .then(res => res.json())
         .then(data => setAssignments(Array.isArray(data) ? data : []))
         .catch(err => console.error("Error fetching assignments:", err));
@@ -26,7 +26,7 @@ export default function Course() {
 
   useEffect(() => {
     if (activeTab === 'Announcements') {
-      fetch(`http://localhost:5000/test/announcements/${username}/${encodeURIComponent(courseName)}`)
+      fetch(`/test/announcements/${username}/${encodeURIComponent(courseName)}`)
         .then(res => res.json())
         .then(data => setAnnouncements(Array.isArray(data) ? data : []))
         .catch(err => console.error("Error fetching announcements:", err));
@@ -35,7 +35,7 @@ export default function Course() {
 
   useEffect(() => {
     if (isTeacher && activeTab === 'Students') {
-      fetch(`http://localhost:5000/test/teacherclasses/${encodeURIComponent(courseName)}/${username}`)
+      fetch(`/test/teacherclasses/${encodeURIComponent(courseName)}/${username}`)
         .then(res => res.json())
         .then(data => setStudents(Array.isArray(data) ? data : []))
         .catch(err => console.error("Error fetching students:", err));
@@ -51,7 +51,7 @@ export default function Course() {
       title: newTitle
     };
 
-    const res = await fetch('http://localhost:5000/test/announcements', {
+    const res = await fetch('/test/announcements', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
