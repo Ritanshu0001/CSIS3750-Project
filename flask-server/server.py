@@ -1,5 +1,7 @@
 from functools import wraps
 import pymongo
+from bson import ObjectId
+from flask import request
 from flask import Response
 from bson.json_util import dumps
 from flask import jsonify
@@ -11,7 +13,6 @@ from pymongo import MongoClient
 # from werkzeug.security import check_password_hash
 from bson.objectid import ObjectId
 # import jwt
-
 
 app = Flask(__name__)
 
@@ -116,10 +117,9 @@ def login():
     return jsonify({
     "message": "Login successful",
     "student_id": str(user['_id']),
-    "username": user.get('username')  # Safely gets 'username'
+    "username": user.get('username'),
+    "firstName": user.get('firstName'),  # Safely gets 'username'
      }), 200
-
-
 
 def serialize_doc(doc):
     doc['_id'] = str(doc['_id'])
@@ -220,6 +220,29 @@ def get_student_assignments(username, courseName):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+@app.route('/test/assignments/<string:assignment_id>/grade', methods=['PUT'])
+def update_assignment_grade(assignment_id):
+    try:
+        data = request.get_json()
+        new_grade = data.get('marksObtained')
+
+        if new_grade is None:
+            return jsonify({"error": "Missing marksObtained"}), 400
+
+        result = db.assignments.update_one(
+            {"_id": ObjectId(assignment_id)},
+            {"$set": {"marksObtained": new_grade}}
+        )
+
+        if result.modified_count == 0:
+            return jsonify({"error": "Assignment not found or grade unchanged"}), 404
+
+        return jsonify({"message": "Grade updated successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    
 @app.route('/test/assignments/<string:username>/<string:courseName>', methods=['GET'])
 def get_assignments_by_user_and_course(username, courseName):
     assignments = list(db.assignments.find({
@@ -250,6 +273,27 @@ def get_announcements(username, courseName):
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+@app.route('/test/assignments', methods=['PUT'])
+def update_assignment_marks():
+    data = request.json
+    username = data.get("username")
+    courseName = data.get("courseName")
+    assignmentName = data.get("assignmentName")
+    marksObtained = data.get("marksObtained")
+
+    if not all([username, courseName, assignmentName]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    result = db.assignments.update_one(
+        {"username": username, "courseName": courseName, "name": assignmentName},
+        {"$set": {"marksObtained": marksObtained}}
+    )
+
+    if result.modified_count == 1:
+        return jsonify({"message": "Marks updated successfully"}), 200
+    else:
+        return jsonify({"error": "Update failed or no change made"}), 400
 
 
 # ✅ Post an announcement
