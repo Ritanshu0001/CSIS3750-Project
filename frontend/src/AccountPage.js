@@ -7,20 +7,21 @@ function AccountPage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('/test/users/jm6013')
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Failed to fetch user');
-        }
-        return res.json();
-      })
+    const username = localStorage.getItem('username');
+    if (!username) return;
+
+    fetch(`http://localhost:5000/test/users/${username}`)
+      .then((res) => res.json())
       .then((data) => {
-        console.log("✅ Fetched user data:", data);
-        setUser(data);
+        if (data && !data.error) {
+          setUser(data);
+        } else {
+          setError('User not found or error retrieving user.');
+        }
       })
       .catch((err) => {
-        console.error('❌ Error fetching user:', err);
-        setError('Failed to load user data.');
+        console.error("Failed to fetch user data:", err);
+        setError("Something went wrong while loading your profile.");
       });
   }, []);
 
@@ -49,11 +50,11 @@ function AccountPage() {
           </div>
           <div className="profile-details">
             <ul>
-              <li><strong>Display Name:</strong> {user.displayName || user.user}</li>
+              <li><strong>Display Name:</strong> {user.displayName || user.username}</li>
               <li><strong>Email:</strong> {user.email}</li>
               <li><strong>Phone Number:</strong> {user.phoneNumber || 'N/A'}</li>
-              <li><strong>University:</strong> {user.university || 'Nova Southeastern University'}</li>
-              <li><strong>Time Zone:</strong> Eastern Time (US & Canada)</li>
+              <li><strong>University:</strong> {user.university || 'N/A'}</li>
+              <li><strong>Time Zone:</strong> {Intl.DateTimeFormat().resolvedOptions().timeZone}</li>
             </ul>
           </div>
         </div>
@@ -63,3 +64,4 @@ function AccountPage() {
 }
 
 export default AccountPage;
+

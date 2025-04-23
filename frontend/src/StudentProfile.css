@@ -1,0 +1,28 @@
+
+.student-profile-container {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.student-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin: 15px 0;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.student-name {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+}
+
+.student-info {
+  font-size: 16px;
+  color: #666;
+}

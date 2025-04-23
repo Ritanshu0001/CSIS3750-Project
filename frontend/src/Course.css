@@ -134,3 +134,27 @@ html, body {
   border-radius: 20px;
   font-size: 14px;
 }
+
+.announcement-form {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.announcement-form input,
+.announcement-form textarea {
+  margin-bottom: 10px;
+  padding: 8px;
+  font-size: 1em;
+}
+
+.announcement-form button {
+  width: 150px;
+  padding: 8px;
+  font-weight: bold;
+  background-color: #000;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+

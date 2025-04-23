@@ -1,11 +1,18 @@
 from functools import wraps
 import pymongo
+from flask import Response
+from bson.json_util import dumps
+from flask import jsonify
+from bson.json_util import dumps, loads
 from flask import Flask, request, jsonify
+from datetime import datetime
+from pymongo import MongoClient
 # from flask_pymongo import PyMongo
 # from werkzeug.security import check_password_hash
 from bson.objectid import ObjectId
+
 # import jwt
-import datetime
+
 
 app = Flask(__name__)
 
@@ -20,6 +27,7 @@ def after_request(response):
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
     return response
 
+
 # app.config["MONGO_URI"] = "mongodb+srv://nweikl:qyQrov-gyxsi1-dejtov@csis3750.auwttdg.mongodb.net/csis3750_db?retryWrites=true&w=majority&appName=csis3750"
 # app.config["SECRET_KEY"] = "your_secret_key_here"
 #
@@ -27,9 +35,9 @@ def after_request(response):
 # db = db
 
 
-client = pymongo.MongoClient("mongodb+srv://nweikl:qyQrov-gyxsi1-dejtov@csis3750.auwttdg.mongodb.net/csis3750_db?retryWrites=true&w=majority&appName=csis3750")
+client = pymongo.MongoClient(
+    "mongodb+srv://nweikl:qyQrov-gyxsi1-dejtov@csis3750.auwttdg.mongodb.net/csis3750_db?retryWrites=true&w=majority&appName=csis3750")
 db = client["test"]
-
 
 try:
     client.admin.command('ping')
@@ -109,7 +117,8 @@ def login():
     # Success
     return jsonify({
         "message": "Login successful",
-        "student_id": str(user['_id'])
+        "student_id": str(user['_id']),
+        "username": user.get('username')  # Safely gets 'username'
     }), 200
 
 
@@ -142,7 +151,6 @@ def serialize_doc(doc):
 
 @app.route('/test/users/<string:username>', methods=['GET', 'PUT'])
 def student_profile(username):
-
     if request.method == 'GET':
         user = db.users.find_one({"username": username})
         if not user:
@@ -166,6 +174,110 @@ def get_courses_by_username(username):
         return jsonify({"error": "No courses found for user."}), 404
     courses = [serialize_doc(course) for course in courses]
     return jsonify(courses), 200
+
+
+@app.route('/test/teacherclasses/<string:courseName>/<string:teacherUsername>', methods=['GET'])
+def get_teacherclass_students(courseName, teacherUsername):
+    try:
+        # Get the teacher's document
+        teacher_doc = db.teacherclasses.find_one({
+            "teacherUsername": teacherUsername,
+            "courses.courseName": courseName
+        })
+
+        if not teacher_doc:
+            return jsonify({"error": "Teacher or course not found"}), 404
+
+        # Find the course object from their list
+        course = next((c for c in teacher_doc['courses'] if c['courseName'] == courseName), None)
+        if not course:
+            return jsonify({"error": "Course not found in teacher's list"}), 404
+
+        student_usernames = course.get("students", [])
+
+        # Fetch student details from the users collection
+        users = list(db.users.find({"username": {"$in": student_usernames}}))
+        result = [
+            {
+                "username": u["username"],
+                "firstName": u.get("firstName", ""),
+                "lastName": u.get("lastName", "")
+            } for u in users if u["username"] != teacherUsername
+        ]
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/test/student-assignments/<string:username>/<string:courseName>', methods=['GET'])
+def get_student_assignments(username, courseName):
+    try:
+        assignments = list(db.assignments.find({
+            "username": username,
+            "courseName": {"$regex": f"^{courseName}$", "$options": "i"}
+        }))
+        return Response(dumps(assignments), mimetype='application/json'), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/test/assignments/<string:username>/<string:courseName>', methods=['GET'])
+def get_assignments_by_user_and_course(username, courseName):
+    assignments = list(db.assignments.find({
+        "username": username,
+        "courseName": courseName
+    }))
+    if not assignments:
+        return jsonify({"error": "No assignments found."}), 404
+    return jsonify([serialize_doc(a) for a in assignments]), 200
+
+
+@app.route('/test/announcements/<string:username>/<string:courseName>', methods=['GET'])
+def get_announcements(username, courseName):
+    try:
+        # Check if user is a student in the course
+        teacher_doc = db.teacherclasses.find_one({
+            "courses.courseName": courseName,
+            "courses.students": username
+        })
+
+        if not teacher_doc:
+            return jsonify({"error": "User not enrolled in this course"}), 403
+
+        # Return all announcements for the course
+        announcements = list(db.announcements.find({
+            "courseName": {"$regex": f"^{courseName}$", "$options": "i"}
+        }))
+        return jsonify([serialize_doc(a) for a in announcements]), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ✅ Post an announcement
+@app.route('/test/announcements', methods=['POST'])
+def post_announcement():
+    try:
+        data = request.json
+
+        # ✅ Validate required fields
+        if not all(k in data for k in ("username", "courseName", "message")):
+            return jsonify({"error": "Missing fields"}), 400
+
+        announcement = {
+            "username": data["username"],
+            "courseName": data["courseName"],
+            "message": data["message"],
+            "createdAt": datetime.now()  # ✅ Correct use
+        }
+
+        db.announcements.insert_one(announcement)
+        return jsonify({"success": True}), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/api/student/<student_id>/assignments', methods=['GET'])
@@ -334,6 +446,7 @@ def view_quizzes(student_id):
     quizzes = [serialize_doc(quiz) for quiz in quizzes]
     return jsonify(quizzes)
 
+
 # 4. Viewing details for a specific quiz/test.
 @app.route('/api/student/<student_id>/quizzes/<quiz_id>', methods=['GET'])
 def view_quiz(student_id, quiz_id):
@@ -348,6 +461,7 @@ def view_quiz(student_id, quiz_id):
         return jsonify({"error": "Quiz not found."}), 404
 
     return jsonify(serialize_doc(quiz))
+
 
 # 5. Submitting quiz/test answers.
 @app.route('/api/student/<student_id>/quizzes/<quiz_id>/submission', methods=['POST'])
@@ -374,6 +488,7 @@ def submit_quiz(student_id, quiz_id):
     submission['quiz_id'] = str(submission['quiz_id'])
     return jsonify(submission), 201
 
+
 # 6. Viewing announcements made by teachers.
 @app.route('/api/student/<student_id>/announcements', methods=['GET'])
 def view_announcements(student_id):
@@ -393,4 +508,3 @@ def view_announcements(student_id):
 
 if __name__ == '__main__':
     app.run(debug=True)
-

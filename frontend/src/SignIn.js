@@ -22,9 +22,10 @@ function SignIn({ setIsLoggedIn }) {
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.setItem('username', 'jm6013');
+        localStorage.setItem('username', data.username); // Assume backend returns it
+        localStorage.setItem('email', email);
         setIsLoggedIn(true);
-        navigate('/verify');
+        navigate('/main');
       } else {
         alert(data.error || 'Login failed. Please check your credentials.');
       }
@@ -63,15 +64,13 @@ function SignIn({ setIsLoggedIn }) {
             required
           />
 
-          <div className="password-field">
-            <input
-              type="password"
-              placeholder="Password:"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
+          <input
+            type="password"
+            placeholder="Password:"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
 
           <button
             className="signin-filled"

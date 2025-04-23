@@ -1,3 +1,4 @@
+// App.js
 import './App.css';
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
@@ -5,30 +6,9 @@ import SignIn from './SignIn';
 import Verification from './Verification';
 import MainPage from './MainPage';
 import AccountPage from './AccountPage';
+import Course from './Course';
+import StudentProfile from './StudentProfile';
 
-function LandingPage() {
-  return (
-    <>
-      <div className="hero">
-        <div className="hero-left">
-          <img src="/homepage_img.png" alt="BrightBoard" />
-        </div>
-        <div className="hero-right">
-          <h1>Welcome to <br /> <strong>BrightBoard.</strong></h1>
-          <p>BrightBoard is an enhanced version of Canvas with improved features and better collaboration tools.</p>
-          <Link to="/signin">
-            <button className="signin-filled">Sign in ➤</button>
-          </Link>
-        </div>
-      </div>
-      <div className="quote">
-        “BrightBoard makes class organization 10x easier.” – Jane, CSIS 7777
-      </div>
-    </>
-  );
-}
-
-// ✅ Navbar updated to always show "Sign In" on specific pages
 function Navbar({ isLoggedIn }) {
   const location = useLocation();
   const hideLinks = ['/', '/signin', '/verify'];
@@ -36,9 +16,7 @@ function Navbar({ isLoggedIn }) {
 
   return (
     <nav className="navbar">
-      <div className="logo">
-        🎓 <span>BrightBoard</span>
-      </div>
+      <div className="logo">🎓 <span>BrightBoard</span></div>
       <ul className="nav-links">
         {!shouldHideLinks && (
           <>
@@ -48,16 +26,12 @@ function Navbar({ isLoggedIn }) {
         )}
         <li>
           {shouldHideLinks ? (
-            <Link to="/signin">
-              <button className="signin-outline">Sign In</button>
-            </Link>
+            <Link to="/signin"><button className="signin-outline">Sign In</button></Link>
           ) : (
             isLoggedIn ? (
-              <button className="signin-outline">Muhammad</button>
+              <button className="signin-outline">{localStorage.getItem('username')}</button>
             ) : (
-              <Link to="/signin">
-                <button className="signin-outline">Sign In</button>
-              </Link>
+              <Link to="/signin"><button className="signin-outline">Sign In</button></Link>
             )
           )}
         </li>
@@ -73,11 +47,13 @@ function App() {
     <Router>
       <Navbar isLoggedIn={isLoggedIn} />
       <Routes>
-        <Route path="/" element={<LandingPage />} />
+        <Route path="/" element={<SignIn setIsLoggedIn={setIsLoggedIn} />} />
         <Route path="/signin" element={<SignIn setIsLoggedIn={setIsLoggedIn} />} />
         <Route path="/verify" element={<Verification />} />
         <Route path="/main" element={<MainPage />} />
         <Route path="/account" element={<AccountPage />} />
+        <Route path="/course/:username/:courseName" element={<Course />} />
+        <Route path="/course/:courseName/students/:studentUsername" element={<StudentProfile />} />
       </Routes>
     </Router>
   );

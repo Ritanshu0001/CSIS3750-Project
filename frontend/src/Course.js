@@ -1,124 +1,166 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import './Course.css';
 
 export default function Course() {
+  const { username, courseName } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Home');
+  const [assignments, setAssignments] = useState([]);
+  const [announcements, setAnnouncements] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [newAnnouncement, setNewAnnouncement] = useState('');
+  const [newTitle, setNewTitle] = useState('');
+
+  const email = localStorage.getItem('email');
+  const isTeacher = email && email.endsWith('@nova.edu');
+
+  useEffect(() => {
+    if (activeTab === 'Assignments') {
+      fetch(`http://localhost:5000/test/assignments/${username}/${encodeURIComponent(courseName)}`)
+        .then(res => res.json())
+        .then(data => setAssignments(Array.isArray(data) ? data : []))
+        .catch(err => console.error("Error fetching assignments:", err));
+    }
+  }, [activeTab, username, courseName]);
+
+  useEffect(() => {
+    if (activeTab === 'Announcements') {
+      fetch(`http://localhost:5000/test/announcements/${username}/${encodeURIComponent(courseName)}`)
+        .then(res => res.json())
+        .then(data => setAnnouncements(Array.isArray(data) ? data : []))
+        .catch(err => console.error("Error fetching announcements:", err));
+    }
+  }, [activeTab, username, courseName]);
+
+  useEffect(() => {
+    if (isTeacher && activeTab === 'Students') {
+      fetch(`http://localhost:5000/test/teacherclasses/${encodeURIComponent(courseName)}/${username}`)
+        .then(res => res.json())
+        .then(data => setStudents(Array.isArray(data) ? data : []))
+        .catch(err => console.error("Error fetching students:", err));
+    }
+  }, [activeTab, isTeacher, courseName, username]);
+
+  const handleAnnouncementSubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      username,
+      courseName,
+      message: newAnnouncement,
+      title: newTitle
+    };
+
+    const res = await fetch('http://localhost:5000/test/announcements', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+    if (res.ok) {
+      setNewTitle('');
+      setNewAnnouncement('');
+      setAnnouncements(prev => [
+        ...prev,
+        { ...payload, createdAt: new Date().toISOString() }
+      ]);
+    } else {
+      alert(result.error || "Failed to post announcement.");
+    }
+  };
+
+  const handleViewStudent = (studentUsername) => {
+    navigate(`/course/${courseName}/students/${studentUsername}`);
+  };
 
   const renderContent = () => {
     switch (activeTab) {
       case 'Home':
-        return (
-          <>
-            <h2>Welcome to CSIS 7077</h2>
-            <ul>
-              <li>My name is [Instructor Name] and I will be your instructor for this course. I'm looking forward to an engaging and productive semester with all of you. Please take some time to carefully review the course syllabus, weekly schedule, and the materials provided in the course platform. Everything you need to succeed this semester is available in the course modules.</li>
-              <li><strong>Course Description</strong><br />
-                An introduction to the principles and practices of [subject name], emphasizing critical thinking, conceptual understanding, and practical application. Topics include [topic 1], [topic 2], and [topic 3]. Frequency: Offered every Fall and Spring.
-              </li>
-              <li><strong>Getting Started</strong>
-                <ul>
-                  <li>Review the full course syllabus.</li>
-                  <li>Make sure to check the weekly course schedule.</li>
-                  <li>Obtain access to the required course textbook or digital version.</li>
-                  <li>Familiarize yourself with how assignments and quizzes will be submitted.</li>
-                </ul>
-              </li>
-              <li><strong>Text Information</strong><br />
-                [Course Title], [Edition Number]<br />
-                • [Author One]<br />
-                • [Author Two]<br />
-                Published by [Publisher Name] ([Publication Date]) – Copyright © [Year], [Publisher]
-              </li>
-              <li>I’m excited to start this journey with you and I’m here to support your success in this course. Let’s have a great semester!</li>
-            </ul>
-          </>
-        );
+        return <p>Welcome to <strong>{courseName}</strong>. Use the tabs to explore course resources.</p>;
 
       case 'Assignments':
         return (
-          <>
-            <h2>Assignments</h2>
-            <div className="assignment-box">
-              {[
-                { title: "Assignment 1: Essay on Climate Change", date: "04/22", completed: true },
-                { title: "Assignment 2: Data Analysis Project", date: "04/30", completed: true },
-                { title: "Assignment 3: Research Reflection", date: "05/08", completed: false },
-                { title: "Assignment 4: Oral Presentation", date: "05/15", completed: false },
-              ].map((assignment, index) => (
-                <div className="assignment-row" key={index}>
-                  <span className="assignment-name">{assignment.title}</span>
-                  <div className="assignment-meta">
-                    <span className="assignment-due">Due: {assignment.date}</span>
-                    <img
-                      className="assignment-icon"
-                      src={assignment.completed ? "/checkmark.png" : "/circle1.png"}
-                      alt={assignment.completed ? "Completed" : "Pending"}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
+          <div className="assignment-box">
+            {assignments.map((a, i) => (
+              <div className="assignment-row" key={i}>
+                <span>{a.name}</span>
+                <span>Due: {new Date(a.dueDate).toLocaleDateString()}</span>
+              </div>
+            ))}
+          </div>
         );
 
       case 'Announcements':
         return (
-          <>
-            <h2>Announcements for CSIS 7077:</h2>
-            <div className="assignment-box">
-              {Array(4).fill().map((_, index) => (
-                <div className="assignment-row" key={index}>
-                  <span className="assignment-name">No class on Friday</span>
-                  <span className="assignment-due">08/12</span>
-                </div>
-              ))}
-            </div>
-          </>
+          <div className="assignment-box">
+            {isTeacher && (
+              <form onSubmit={handleAnnouncementSubmit} className="announcement-form">
+                <input
+                  type="text"
+                  placeholder="Title"
+                  value={newTitle}
+                  onChange={e => setNewTitle(e.target.value)}
+                  required
+                />
+                <textarea
+                  placeholder="Write your announcement..."
+                  value={newAnnouncement}
+                  onChange={e => setNewAnnouncement(e.target.value)}
+                  required
+                />
+                <button type="submit">Post Announcement</button>
+              </form>
+            )}
+            {announcements.map((a, i) => (
+              <div className="assignment-row" key={i}>
+                <strong>{a.title || 'Announcement'}</strong>
+                <p>{a.message}</p>
+                <small>
+                  {a.createdAt && !isNaN(Date.parse(a.createdAt))
+                    ? new Date(a.createdAt).toLocaleString()
+                    : 'Date not available'}
+                </small>
+              </div>
+            ))}
+          </div>
         );
 
       case 'Grades':
+        return <p>Grades coming soon...</p>;
+
+      case 'Students':
         return (
-          <>
-            <h2>Grades for CSIS 7077:</h2>
-            <div className="assignment-box">
-              {Array(4).fill().map((_, index) => (
-                <div className="assignment-row" key={index}>
-                  <span className="assignment-name">Assignment 2</span>
-                  <span className="grade-tag">100%</span>
+          <div className="assignment-box">
+            {students.length === 0 ? (
+              <p>No students found for this course.</p>
+            ) : (
+              students.map((s, i) => (
+                <div className="assignment-row" key={i}>
+                  <span>{s.firstName} {s.lastName}</span>
+                  <button onClick={() => handleViewStudent(s.username)}>View</button>
                 </div>
-              ))}
-            </div>
-          </>
+              ))
+            )}
+          </div>
         );
 
       case 'Syllabus':
-        return (
-          <>
-            <h2>Course Syllabus</h2>
-            <p>
-              <a href="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 'bold', fontSize: '18px', color: '#000', textDecoration: 'underline' }}>
-                View Syllabus PDF
-              </a>
-            </p>
-          </>
-        );
+        return <a href="/dummy.pdf" target="_blank" rel="noreferrer">View Syllabus</a>;
 
       default:
         return null;
     }
   };
 
+  const tabs = ['Home', 'Assignments', 'Announcements', 'Grades', ...(isTeacher ? ['Students'] : []), 'Syllabus'];
+
   return (
     <div className="course-page">
       <div className="sidebar">
         <ul>
-          {['Home', 'Assignments', 'Announcements', 'Grades', 'Syllabus'].map(tab => (
-            <li
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={activeTab === tab ? 'active' : ''}
-            >
+          {tabs.map(tab => (
+            <li key={tab} onClick={() => setActiveTab(tab)} className={activeTab === tab ? 'active' : ''}>
               {tab}
             </li>
           ))}
@@ -129,62 +171,8 @@ export default function Course() {
       <div className="course-content">
         {renderContent()}
       </div>
-
-      {activeTab === 'Home' && (
-        <div className="instructor-card">
-          <img src="/professor.png" alt="Instructor" />
-          <h3>Professor Muhammad</h3>
-          <p>Canvas Inbox: Response time within 24-48 hours M-F.<br />
-            Office Hours: By appointment<br /><br />
-            Canvas Online Support Options Include:<br />
-            • Phone: 1-844-865-2568<br />
-            • Canvas Live Chat<br />
-            • Canvas Help Guides<br />
-            • Selecting the Help button inside Canvas
-          </p>
-        </div>
-      )}
-
-      {activeTab === 'Assignments' && (
-        <div className="instructor-card">
-          <img src="/assignment.png" alt="Assignments" />
-          <h3>Assignment Info</h3>
-          <p>• Submit through Canvas only<br />
-            • File formats allowed: .docx, .pdf<br />
-            • Late submissions may not be accepted<br />
-            • Contact your professor if you run into issues
-          </p>
-        </div>
-      )}
-
-      {activeTab === 'Announcements' && (
-        <div className="instructor-card">
-          <img src="/professor.png" alt="Announcements" />
-          <h3>Professor Muhammad</h3>
-          <p>• No class announcements may be updated weekly<br />
-            • Refresh the page to check for latest info<br />
-            • Contact your professor for urgent updates</p>
-        </div>
-      )}
-
-      {activeTab === 'Grades' && (
-        <div className="instructor-card">
-          <img src="/score.png" alt="Grades" />
-          <h3>Overall Grade for CSIS 7077:</h3>
-          <div style={{
-            marginTop: '10px',
-            backgroundColor: 'white',
-            borderRadius: '20px',
-            padding: '12px 24px',
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: 'green',
-            display: 'inline-block'
-          }}>
-            98.2%
-          </div>
-        </div>
-      )}
     </div>
   );
 }
+
+
