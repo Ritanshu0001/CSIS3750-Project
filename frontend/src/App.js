@@ -16,6 +16,7 @@ import Course from './Course';
 import StudentProfile from './StudentProfile';
 import ToDo from "./ToDo";
 
+
 function Navbar({ isLoggedIn, setIsLoggedIn }) {
   const location = useLocation();
   const navigate = useNavigate();

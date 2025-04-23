@@ -124,7 +124,7 @@ body, html {
 
 .signin-wrapper {
   flex: 1;
-  display: flex;
+  /*display: flex;*/
   justify-content: center;
   align-items: center;
   gap: 100px;

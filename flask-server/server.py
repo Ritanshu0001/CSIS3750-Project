@@ -1,17 +1,9 @@
-from functools import wraps
 import pymongo
 from flask import Response
 from bson.json_util import dumps
-from flask import jsonify
-from bson.json_util import dumps, loads
 from flask import Flask, request, jsonify
 from datetime import datetime
-from pymongo import MongoClient
-# from flask_pymongo import PyMongo
-# from werkzeug.security import check_password_hash
 from bson.objectid import ObjectId
-
-# import jwt
 
 
 app = Flask(__name__)

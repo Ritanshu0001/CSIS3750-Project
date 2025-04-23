@@ -48,7 +48,9 @@ function MainPage() {
                   <li>Sample answer</li>
                 </ul>
                 <img src="/class_img.png" alt="Course" className="course-image" />
-                <div className="progress">81.5%</div>
+                {localStorage.getItem('username') !== 'teacher' && (
+                  <div className="progress">81.5%</div>
+                )}
               </div>
             ))
           ) : (
