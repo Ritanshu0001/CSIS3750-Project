@@ -102,17 +102,17 @@ export default function Course() {
       case 'Assignments':
         return (
           <>
-            <h2>Assignments</h2>
-            <div className="assignment-box">
+            <h2>Assignments for {courseName}</h2>
+            <div className="announcement-wrapper">
               {assignments.map((a, i) => (
-                <div className="assignment-row" key={i}>
-                  <span className="assignment-name">{a.name}</span>
-                  <div className="assignment-meta">
-                    <span className="assignment-due">
-                      Due: {a.dueDate ? new Date(a.dueDate).toLocaleDateString() : 'N/A'}
-                    </span>
+                <div className="announcement-item assignment-item-row" key={i}>
+                  <div className="assignment-left">
+                    <strong>{a.name}</strong>
+                  </div>
+                  <div className="assignment-right">
+                    <span>Due: {a.dueDate ? new Date(a.dueDate).toLocaleDateString() : 'N/A'}</span>
                     <img
-                      className="assignment-icon"
+                      style={{ width: "20px", height: "20px" }}
                       src={a.marksObtained ? "/checkmark.png" : "/circle1.png"}
                       alt={a.marksObtained ? "Completed" : "Pending"}
                     />
@@ -162,43 +162,77 @@ export default function Course() {
         );
 
       case 'Grades':
-        return (
-          <>
-            <h2>Grades for {courseName}</h2>
-            <div className="assignment-box">
-              {assignments.length === 0 ? (
-                <p>No grades available yet.</p>
+          const totalScored = assignments.reduce((acc, a) => acc + (a.marksObtained || 0), 0);
+          const totalMarks = assignments.reduce((acc, a) => acc + (a.totalMarks || 0), 0);
+          const percentage = totalMarks ? ((totalScored / totalMarks) * 100).toFixed(1) : '0.0';
+        
+          return (
+            <>
+              <h2>Grades for {courseName}</h2>
+              <div style={{ display: 'flex', gap: '40px' }}>
+                <div className="announcement-wrapper" style={{ flex: 1 }}>
+                  {assignments.length === 0 ? (
+                    <p>No grades available yet.</p>
+                  ) : (
+                    assignments.map((a, i) => (
+                      <div className="assignment-item-row" key={i}>
+                        <div className="assignment-left">{a.name}</div>
+                        <div className="assignment-right">
+                          <span>
+                            {a.marksObtained !== undefined && a.marksObtained !== null
+                              ? `${a.marksObtained} / ${a.totalMarks}`
+                              : "Not Graded"}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="instructor-card">
+                  <img src="/score.png" alt="Grades" />
+                  <h3>Your Overall Grade:</h3>
+                  <div style={{
+                    marginTop: '10px',
+                    backgroundColor: 'white',
+                    borderRadius: '20px',
+                    padding: '12px 24px',
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    color: 'green',
+                    display: 'inline-block'
+                  }}>
+                    {percentage}%
+                  </div>
+                </div>
+              </div>
+            </>
+        );
+        
+      case 'Students':
+          return (
+            <div className="announcement-wrapper">
+              {students.length === 0 ? (
+                <p>No students found for this course.</p>
               ) : (
-                assignments.map((a, i) => (
-                  <div className="assignment-row" key={i}>
-                    <span className="assignment-name">{a.name}</span>
-                    <span className="grade-tag">
-                      {a.marksObtained !== undefined && a.marksObtained !== null
-                        ? `${a.marksObtained} / ${a.totalMarks}`
-                        : "Not Graded"}
-                    </span>
+                students.map((s, i) => (
+                  <div className="assignment-item-row" key={i}>
+                    <div className="assignment-left">
+                      {s.firstName} {s.lastName}
+                    </div>
+                    <div className="assignment-right">
+                      <button
+                        className="view-button"
+                        onClick={() => handleViewStudent(s.username)}
+                      >
+                        View Profile
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
             </div>
-          </>
         );
-
-      case 'Students':
-        return (
-          <div className="assignment-box">
-            {students.length === 0 ? (
-              <p>No students found for this course.</p>
-            ) : (
-              students.map((s, i) => (
-                <div className="assignment-row" key={i}>
-                 <span className="student-name">{s.firstName} {s.lastName}</span>
-                 <button className="view-button" onClick={() => handleViewStudent(s.username)}>View</button>
-                </div>
-              ))
-            )}
-          </div>
-        );
+        
 
       case 'Syllabus':
         return (
@@ -225,7 +259,8 @@ export default function Course() {
     }
   };
 
-  const tabs = ['Home', 'Assignments', 'Announcements', 'Grades', ...(isTeacher ? ['Students'] : []), 'Syllabus'];
+  const tabs = ['Home', 'Assignments', 'Announcements', ...(isTeacher ? ['Students'] : ['Grades']), 'Syllabus'];
+
 
   return (
     <div className="course-page">
@@ -278,28 +313,6 @@ export default function Course() {
           </p>
         </div>
       )}
-
-      {activeTab === 'Grades' && (
-        <div className="instructor-card">
-          <img src="/score.png" alt="Grades" />
-          <h3>Your Overall Grade:</h3>
-          <div style={{
-            marginTop: '10px',
-            backgroundColor: 'white',
-            borderRadius: '20px',
-            padding: '12px 24px',
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: 'green',
-            display: 'inline-block'
-          }}>
-            98.2%
-          </div>
-        </div>
-      )}
     </div>
   );
 }
-
-
-

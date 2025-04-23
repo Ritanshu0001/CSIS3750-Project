@@ -40,13 +40,10 @@ function AccountPage() {
         <div className="profile-card">
           <div className="profile-left">
             <img
-              src={user.profilePicture || '/defaultAvatar.png'}
+              src={user.profileImage || '/defaultAvatar.png'}
               alt="User Avatar"
               className="profile-avatar"
             />
-            <div className="edit-label">
-              Edit <span className="edit-icon">✏️</span>
-            </div>
           </div>
           <div className="profile-details">
             <ul>
@@ -64,4 +61,3 @@ function AccountPage() {
 }
 
 export default AccountPage;
-
