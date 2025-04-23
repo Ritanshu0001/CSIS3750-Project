@@ -230,7 +230,6 @@ def get_assignments_by_user_and_course(username, courseName):
         return jsonify({"error": "No assignments found."}), 404
     return jsonify([serialize_doc(a) for a in assignments]), 200
 
-
 @app.route('/test/announcements/<string:username>/<string:courseName>', methods=['GET'])
 def get_announcements(username, courseName):
     try:
@@ -247,7 +246,7 @@ def get_announcements(username, courseName):
         announcements = list(db.announcements.find({
             "courseName": {"$regex": f"^{courseName}$", "$options": "i"}
         }))
-        return Response(dumps(announcements), mimetype='application/json'), 200
+        return jsonify([serialize_doc(a) for a in announcements]), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
