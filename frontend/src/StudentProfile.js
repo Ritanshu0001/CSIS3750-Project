@@ -7,7 +7,7 @@ export default function StudentProfile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/test/student-assignments/${studentUsername}/${courseName}`)
+    fetch(`/test/student-assignments/${studentUsername}/${courseName}`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {

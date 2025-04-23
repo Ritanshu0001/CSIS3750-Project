@@ -1,21 +1,55 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './ToDo.css';
 
-const todayTasks = [
-  { title: 'Assignment 2', due: '2/12', notes: 'Discuss both views and aspects.' },
-  { title: 'Math Homework', due: '2/12', notes: 'Finish problems 10–20 on page 47.' },
-  { title: 'Reading Log', due: '2/12', notes: 'Summarize chapters 5 and 6.' },
-  { title: 'Biology Quiz', due: '2/12', notes: 'Revise the mitosis and meiosis topics.' }
-];
-
-const tomorrowTasks = [
-  { title: 'Assignment 3', due: '2/13', notes: 'Prepare counterarguments and conclusion.' },
-  { title: 'Group Project', due: '2/13', notes: 'Meet with team to divide tasks.' },
-  { title: 'History Essay', due: '2/13', notes: 'Draft introduction and thesis statement.' },
-  { title: 'Chemistry Lab Report', due: '2/13', notes: 'Complete data analysis and graph.' }
-];
-
 export default function ToDo() {
+  const [todayTasks, setTodayTasks] = useState([]);
+  const [tomorrowTasks, setTomorrowTasks] = useState([]);
+  const username = localStorage.getItem('username');
+
+  useEffect(() => {
+    const fetchAssignments = async () => {
+      try {
+        const res = await fetch(`/api/student/${username}/todo`);
+        const data = await res.json();
+
+        if (res.ok) {
+          const today = [];
+          const tomorrow = [];
+
+          const now = new Date();
+          const todayStr = now.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
+          const tomorrowStr = new Date(now.getTime() + 86400000).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
+
+          data.forEach(task => {
+            const due = new Date(task.due_date);
+            const dueStr = due.toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' });
+
+            const formatted = {
+              title: task.title,
+              due: dueStr,
+              notes: task.description
+            };
+
+            if (dueStr === todayStr) {
+              today.push(formatted);
+            } else if (dueStr === tomorrowStr) {
+              tomorrow.push(formatted);
+            }
+          });
+
+          setTodayTasks(today);
+          setTomorrowTasks(tomorrow);
+        } else {
+          console.error("Failed to load tasks:", data.error);
+        }
+      } catch (err) {
+        console.error("Error fetching assignments:", err);
+      }
+    };
+
+    if (username) fetchAssignments();
+  }, [username]);
+
   return (
     <div className="todo-container">
       <div className="todo-section">

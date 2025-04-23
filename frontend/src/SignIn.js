@@ -22,8 +22,9 @@ function SignIn({ setIsLoggedIn }) {
       const data = await res.json();
 
       if (res.ok) {
-        localStorage.setItem('username', data.username); // Assume backend returns it
+        localStorage.setItem('username', data.username);
         localStorage.setItem('email', email);
+        localStorage.setItem('firstName', data.firstName);
         setIsLoggedIn(true);
         navigate('/main');
       } else {

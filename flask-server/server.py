@@ -118,7 +118,8 @@ def login():
     return jsonify({
         "message": "Login successful",
         "student_id": str(user['_id']),
-        "username": user.get('username')  # Safely gets 'username'
+        "username": user.get('username'),
+        "firstName": user.get('firstName'),
     }), 200
 
 
@@ -310,42 +311,17 @@ def student_notifications(student_id):
 # Endpoints for the student to-do page
 # ---------------------------------
 
-@app.route('/api/student/<student_id>/todo', methods=['GET', 'POST'])
-def student_todo(student_id):
-    """
-    GET: Retrieve all to-do items for the student.
-    POST: Create a new to-do item. Required fields: title, due_date, class, and description.
-    """
-    try:
-        student_obj_id = ObjectId(student_id)
-    except Exception:
-        return jsonify({"error": "Invalid student ID format."}), 400
-
-    if request.method == 'GET':
-        # Retrieve all to-do items that belong to the student
-        todos = list(db.todos.find({"student_id": student_obj_id}))
-        todos = [serialize_doc(todo) for todo in todos]
-        return jsonify(todos)
-
-    elif request.method == 'POST':
-        data = request.get_json()
-        required_fields = ["title", "due_date", "class", "description"]
-        if not data or not all(field in data for field in required_fields):
-            return jsonify({"error": "Missing required fields. Required: title, due_date, class, description."}), 400
-
-        # Create a new to-do item; default 'completed' is False if not provided
-        new_todo = {
-            "student_id": student_obj_id,
-            "title": data.get("title"),
-            "due_date": data.get("due_date"),  # expects an ISO 8601 formatted string
-            "class": data.get("class"),
-            "description": data.get("description"),
-            "completed": data.get("completed", False)
-        }
-        result = db.todos.insert_one(new_todo)
-        new_todo['_id'] = str(result.inserted_id)
-        new_todo['student_id'] = str(new_todo['student_id'])
-        return jsonify(new_todo), 201
+@app.route('/api/student/<username>/todo', methods=['GET'])
+def get_assignments_as_todos(username):
+    assignments = list(db.assignments.find({"username": username}))
+    todos = []
+    for a in assignments:
+        todos.append({
+            "title": a.get("name", "Untitled"),
+            "description": a.get("description", ""),
+            "due_date": a.get("dueDate")  # stored as ISO string
+        })
+    return jsonify(todos)
 
 
 @app.route('/api/student/<student_id>/todo/<todo_id>', methods=['PUT', 'DELETE'])
