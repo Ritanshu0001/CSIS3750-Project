@@ -8,6 +8,7 @@ from flask import jsonify
 from bson.json_util import dumps, loads
 from flask import Flask, request, jsonify
 from datetime import datetime
+from datetime import datetime, timedelta
 from pymongo import MongoClient
 # from flask_pymongo import PyMongo
 # from werkzeug.security import check_password_hash
@@ -146,7 +147,28 @@ def serialize_doc(doc):
 #         "student": serialize_doc(student),
 #         "courses": courses
 #     })
+@app.route('/test/student/<username>/todo', methods=['GET'])
+def get_todo(username):
+    try:
+        now = datetime.utcnow()
+        start_today = datetime(now.year, now.month, now.day)
+        end_tomorrow = start_today + timedelta(days=2)
 
+        assignments = list(db.assignments.find({
+            "username": username,
+            "dueDate": {
+                "$gte": start_today,
+                "$lt": end_tomorrow
+            }
+        }))
+
+        for assignment in assignments:
+            assignment["_id"] = str(assignment["_id"])
+            assignment["dueDate"] = assignment["dueDate"].isoformat()
+
+        return jsonify(assignments), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/test/users/<string:username>', methods=['GET', 'PUT'])
 def student_profile(username):
@@ -296,21 +318,22 @@ def update_assignment_marks():
         return jsonify({"error": "Update failed or no change made"}), 400
 
 
-# ✅ Post an announcement
+# ✅ Post an announcement with title support
 @app.route('/test/announcements', methods=['POST'])
 def post_announcement():
     try:
         data = request.json
 
-        # ✅ Validate required fields
-        if not all(k in data for k in ("username", "courseName", "message")):
+        # ✅ Validate required fields including "title"
+        if not all(k in data for k in ("username", "courseName", "message", "title")):
             return jsonify({"error": "Missing fields"}), 400
 
         announcement = {
             "username": data["username"],
             "courseName": data["courseName"],
+            "title": data["title"],  # ✅ Add title here
             "message": data["message"],
-            "createdAt": datetime.now()  # ✅ Correct use
+            "createdAt": datetime.now()  # ✅ Store timestamp
         }
 
         db.announcements.insert_one(announcement)
