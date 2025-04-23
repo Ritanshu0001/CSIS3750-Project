@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const Assessment = require('../models/Assessment');
+const assessment = require('../models/assessment');
+
 
 // Create an assessment
 router.post('/', async (req, res) => {

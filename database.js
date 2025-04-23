@@ -1,16 +1,23 @@
-
+require('dotenv').config(); // Ensure this is at the top to load environment variables first
 const mongoose = require('mongoose');
-const dbUri = 'mongodb://localhost:27017/csisproject';
 
-mongoose.connect(dbUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-});
+const mongoDBUri = process.env.MONGODB_URI;
 
+if (!mongoDBUri) {
+    console.error("MongoDB URI is not set. Please check your .env file.");
+    process.exit(1);
+}
+
+mongoose.connect(mongoDBUri)
+    .then(() => console.log('MongoDB connected successfully'))
+    .catch(err => console.error('Error connecting to MongoDB:', err));
+
+// Get the mongoose connection object
 const db = mongoose.connection;
 
+// Event listeners for MongoDB connection status
 db.on('connected', () => {
-    console.log('Connected to MongoDB successfully');
+    console.log('MongoDB connected');
 });
 
 db.on('error', (err) => {
@@ -21,4 +28,5 @@ db.on('disconnected', () => {
     console.log('MongoDB disconnected');
 });
 
+// Export the connection for use in other parts of your app
 module.exports = db;
