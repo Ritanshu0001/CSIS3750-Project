@@ -10,7 +10,7 @@ function AccountPage() {
     const username = localStorage.getItem('username');
     if (!username) return;
 
-    fetch(`/test/users/${username}`)
+    fetch(`http://localhost:5000/test/users/${username}`)
       .then((res) => res.json())
       .then((data) => {
         if (data && !data.error) {
@@ -40,13 +40,10 @@ function AccountPage() {
         <div className="profile-card">
           <div className="profile-left">
             <img
-              src={user.profilePicture || '/defaultAvatar.png'}
+              src={user.profileImage || '/defaultAvatar.png'}
               alt="User Avatar"
               className="profile-avatar"
             />
-            <div className="edit-label">
-              Edit <span className="edit-icon">✏️</span>
-            </div>
           </div>
           <div className="profile-details">
             <ul>
@@ -64,4 +61,3 @@ function AccountPage() {
 }
 
 export default AccountPage;
-

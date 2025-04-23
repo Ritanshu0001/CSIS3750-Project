@@ -6,25 +6,45 @@ function MainPage() {
   const navigate = useNavigate();
   const [courses, setCourses] = useState([]);
 
+  const username = localStorage.getItem('username');
+
   useEffect(() => {
-    const username = localStorage.getItem('username');
     if (!username) return;
 
-    fetch(`/test/courses/${username}`)
+    // Fetch all courses for the user
+    fetch(`http://localhost:5000/test/courses/${username}`)
       .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setCourses(data);
-        } else {
+      .then(async (data) => {
+        if (!Array.isArray(data)) {
           console.error("Courses data is not an array:", data);
-          setCourses([]);
+          return setCourses([]);
         }
+
+        // Fetch assignment grades for each course
+        const updatedCourses = await Promise.all(
+          data.map(async (course) => {
+            try {
+              const res = await fetch(`http://localhost:5000/test/assignments/${username}/${encodeURIComponent(course.courseName)}`);
+              const assignments = await res.json();
+
+              const totalScored = assignments.reduce((sum, a) => sum + (a.marksObtained || 0), 0);
+              const totalPossible = assignments.reduce((sum, a) => sum + (a.totalMarks || 0), 0);
+              const percentage = totalPossible ? ((totalScored / totalPossible) * 100).toFixed(1) : null;
+
+              return { ...course, percentage };
+            } catch (error) {
+              console.error(`Error fetching assignments for ${course.courseName}:`, error);
+              return { ...course, percentage: null };
+            }
+          })
+        );
+
+        setCourses(updatedCourses);
       })
       .catch((err) => console.error("Failed to fetch courses:", err));
-  }, []);
+  }, [username]);
 
   const handleClick = (course) => {
-    const username = localStorage.getItem('username');
     const encodedCourseName = encodeURIComponent(course.courseName);
     navigate(`/course/${username}/${encodedCourseName}`);
   };
@@ -48,8 +68,9 @@ function MainPage() {
                   <li>Sample answer</li>
                 </ul>
                 <img src="/class_img.png" alt="Course" className="course-image" />
-                {localStorage.getItem('username') !== 'teacher' && (
-                  <div className="progress">81.5%</div>
+                
+                {username !== 'teacher' && course.percentage && (
+                  <div className="progress">{course.percentage}%</div>
                 )}
               </div>
             ))

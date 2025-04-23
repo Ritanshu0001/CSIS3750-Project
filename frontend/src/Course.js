@@ -16,8 +16,8 @@ export default function Course() {
   const isTeacher = email && email.endsWith('@nova.edu');
 
   useEffect(() => {
-    if (activeTab === 'Assignments') {
-      fetch(`/test/assignments/${username}/${encodeURIComponent(courseName)}`)
+    if (activeTab === 'Assignments' || activeTab === 'Grades') {
+      fetch(`http://localhost:5000/test/assignments/${username}/${encodeURIComponent(courseName)}`)
         .then(res => res.json())
         .then(data => setAssignments(Array.isArray(data) ? data : []))
         .catch(err => console.error("Error fetching assignments:", err));
@@ -26,7 +26,7 @@ export default function Course() {
 
   useEffect(() => {
     if (activeTab === 'Announcements') {
-      fetch(`/test/announcements/${username}/${encodeURIComponent(courseName)}`)
+      fetch(`http://localhost:5000/test/announcements/${username}/${encodeURIComponent(courseName)}`)
         .then(res => res.json())
         .then(data => setAnnouncements(Array.isArray(data) ? data : []))
         .catch(err => console.error("Error fetching announcements:", err));
@@ -35,7 +35,7 @@ export default function Course() {
 
   useEffect(() => {
     if (isTeacher && activeTab === 'Students') {
-      fetch(`/test/teacherclasses/${encodeURIComponent(courseName)}/${username}`)
+      fetch(`http://localhost:5000/test/teacherclasses/${encodeURIComponent(courseName)}/${username}`)
         .then(res => res.json())
         .then(data => setStudents(Array.isArray(data) ? data : []))
         .catch(err => console.error("Error fetching students:", err));
@@ -51,7 +51,7 @@ export default function Course() {
       title: newTitle
     };
 
-    const res = await fetch('/test/announcements', {
+    const res = await fetch('http://localhost:5000/test/announcements', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -77,83 +77,190 @@ export default function Course() {
   const renderContent = () => {
     switch (activeTab) {
       case 'Home':
-        return <p>Welcome to <strong>{courseName}</strong>. Use the tabs to explore course resources.</p>;
+        return (
+          <>
+            <h2>Welcome to {courseName}</h2>
+            <ul>
+              <li>My name is [Instructor Name] and I will be your instructor for this course.</li>
+              <li><strong>Course Description</strong><br />
+                An introduction to the principles and practices of [subject name], emphasizing critical thinking and practical application.
+              </li>
+              <li><strong>Getting Started</strong>
+                <ul>
+                  <li>Review the full course syllabus.</li>
+                  <li>Check the weekly course schedule.</li>
+                  <li>Obtain access to the required textbook.</li>
+                </ul>
+              </li>
+              <li><strong>Text Info</strong><br />
+                [Course Title], [Edition] by [Author(s)] - Published by [Publisher]
+              </li>
+            </ul>
+          </>
+        );
 
       case 'Assignments':
         return (
-          <div className="assignment-box">
-            {assignments.map((a, i) => (
-              <div className="assignment-row" key={i}>
-                <span>{a.name}</span>
-                <span>Due: {new Date(a.dueDate).toLocaleDateString()}</span>
-              </div>
-            ))}
-          </div>
+          <>
+            <h2>Assignments for {courseName}</h2>
+            <div className="announcement-wrapper">
+              {assignments.map((a, i) => (
+                <div className="announcement-item assignment-item-row" key={i}>
+                  <div className="assignment-left">
+                    <strong>{a.name}</strong>
+                  </div>
+                  <div className="assignment-right">
+                    <span>Due: {a.dueDate ? new Date(a.dueDate).toLocaleDateString() : 'N/A'}</span>
+                    <img
+                      style={{ width: "20px", height: "20px" }}
+                      src={a.marksObtained ? "/checkmark.png" : "/circle1.png"}
+                      alt={a.marksObtained ? "Completed" : "Pending"}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         );
 
       case 'Announcements':
         return (
-          <div className="assignment-box">
-            {isTeacher && (
-              <form onSubmit={handleAnnouncementSubmit} className="announcement-form">
-                <input
-                  type="text"
-                  placeholder="Title"
-                  value={newTitle}
-                  onChange={e => setNewTitle(e.target.value)}
-                  required
-                />
-                <textarea
-                  placeholder="Write your announcement..."
-                  value={newAnnouncement}
-                  onChange={e => setNewAnnouncement(e.target.value)}
-                  required
-                />
-                <button type="submit">Post Announcement</button>
-              </form>
-            )}
-            {announcements.map((a, i) => (
-              <div className="assignment-row" key={i}>
-                <strong>{a.title || 'Announcement'}</strong>
-                <p>{a.message}</p>
-                <small>
-                  {a.createdAt && !isNaN(Date.parse(a.createdAt))
-                    ? new Date(a.createdAt).toLocaleString()
-                    : 'Date not available'}
-                </small>
-              </div>
-            ))}
-          </div>
+          <>
+            <h2>Announcements for {courseName}</h2>
+            <div className="announcement-wrapper">
+              {isTeacher && (
+                <form onSubmit={handleAnnouncementSubmit} className="announcement-form">
+                  <input
+                    type="text"
+                    placeholder="Title"
+                    value={newTitle}
+                    onChange={e => setNewTitle(e.target.value)}
+                    required
+                  />
+                  <textarea
+                    placeholder="Write your announcement..."
+                    value={newAnnouncement}
+                    onChange={e => setNewAnnouncement(e.target.value)}
+                    required
+                  />
+                  <button type="submit">Post Announcement</button>
+                </form>
+              )}
+              {announcements.map((a, i) => (
+                <div className="announcement-item" key={i}>
+                  <strong>{a.title || 'Announcement'}</strong>
+                  <p>{a.message}</p>
+                  <small>
+                    {a.createdAt && !isNaN(Date.parse(a.createdAt))
+                      ? new Date(a.createdAt).toLocaleString()
+                      : 'Date not available'}
+                  </small>
+                </div>
+              ))}
+            </div>
+          </>
         );
 
       case 'Grades':
-        return <p>Grades coming soon...</p>;
-
-      case 'Students':
-        return (
-          <div className="assignment-box">
-            {students.length === 0 ? (
-              <p>No students found for this course.</p>
-            ) : (
-              students.map((s, i) => (
-                <div className="assignment-row" key={i}>
-                  <span>{s.firstName} {s.lastName}</span>
-                  <button onClick={() => handleViewStudent(s.username)}>View</button>
+          const totalScored = assignments.reduce((acc, a) => acc + (a.marksObtained || 0), 0);
+          const totalMarks = assignments.reduce((acc, a) => acc + (a.totalMarks || 0), 0);
+          const percentage = totalMarks ? ((totalScored / totalMarks) * 100).toFixed(1) : '0.0';
+        
+          return (
+            <>
+              <h2>Grades for {courseName}</h2>
+              <div style={{ display: 'flex', gap: '40px' }}>
+                <div className="announcement-wrapper" style={{ flex: 1 }}>
+                  {assignments.length === 0 ? (
+                    <p>No grades available yet.</p>
+                  ) : (
+                    assignments.map((a, i) => (
+                      <div className="assignment-item-row" key={i}>
+                        <div className="assignment-left">{a.name}</div>
+                        <div className="assignment-right">
+                          <span>
+                            {a.marksObtained !== undefined && a.marksObtained !== null
+                              ? `${a.marksObtained} / ${a.totalMarks}`
+                              : "Not Graded"}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
-              ))
-            )}
-          </div>
+                <div className="instructor-card">
+                  <img src="/score.png" alt="Grades" />
+                  <h3>Your Overall Grade:</h3>
+                  <div style={{
+                    marginTop: '10px',
+                    backgroundColor: 'white',
+                    borderRadius: '20px',
+                    padding: '12px 24px',
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    color: 'green',
+                    display: 'inline-block'
+                  }}>
+                    {percentage}%
+                  </div>
+                </div>
+              </div>
+            </>
         );
+        
+      case 'Students':
+          return (
+            <div className="announcement-wrapper">
+              {students.length === 0 ? (
+                <p>No students found for this course.</p>
+              ) : (
+                students.map((s, i) => (
+                  <div className="assignment-item-row" key={i}>
+                    <div className="assignment-left">
+                      {s.firstName} {s.lastName}
+                    </div>
+                    <div className="assignment-right">
+                      <button
+                        className="view-button"
+                        onClick={() => handleViewStudent(s.username)}
+                      >
+                        View Profile
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+        );
+        
 
       case 'Syllabus':
-        return <a href="/dummy.pdf" target="_blank" rel="noreferrer">View Syllabus</a>;
+        return (
+          <>
+            <h2>Course Syllabus</h2>
+            <a
+              href="/dummy.pdf"
+              target="_blank"
+              rel="noreferrer"
+              style={{
+                fontWeight: 'bold',
+                fontSize: '18px',
+                color: '#000',
+                textDecoration: 'underline'
+              }}
+            >
+              View Syllabus PDF
+            </a>
+          </>
+        );
 
       default:
         return null;
     }
   };
 
-  const tabs = ['Home', 'Assignments', 'Announcements', 'Grades', ...(isTeacher ? ['Students'] : []), 'Syllabus'];
+  const tabs = ['Home', 'Assignments', 'Announcements', ...(isTeacher ? ['Students'] : ['Grades']), 'Syllabus'];
+
 
   return (
     <div className="course-page">
@@ -171,8 +278,41 @@ export default function Course() {
       <div className="course-content">
         {renderContent()}
       </div>
+
+      {activeTab === 'Home' && (
+        <div className="instructor-card">
+          <img src="/professor.png" alt="Instructor" />
+          <h3>Professor Muhammad</h3>
+          <p>Canvas Inbox: Response time within 24–48 hours M–F.<br />
+            Office Hours: By appointment<br /><br />
+            Canvas Help:<br />
+            • 1-844-865-2568<br />
+            • Chat, Help Guides, Support Portal
+          </p>
+        </div>
+      )}
+
+      {activeTab === 'Assignments' && (
+        <div className="instructor-card">
+          <img src="/assignment.png" alt="Assignments" />
+          <h3>Assignment Info</h3>
+          <p>• Submit through Canvas<br />
+            • Allowed formats: .docx, .pdf<br />
+            • Late work may not be accepted
+          </p>
+        </div>
+      )}
+
+      {activeTab === 'Announcements' && (
+        <div className="instructor-card">
+          <img src="/professor.png" alt="Announcements" />
+          <h3>Professor Muhammad</h3>
+          <p>• Check announcements weekly<br />
+            • Refresh for updates<br />
+            • Email for urgent info
+          </p>
+        </div>
+      )}
     </div>
   );
 }
-
-

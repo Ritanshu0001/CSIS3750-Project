@@ -141,3 +141,23 @@ body, html {
   background-color: #fabe2c;
 }
 
+.course-card {
+  position: relative;
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.progress {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: #ffd700;
+  color: #000;
+  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}

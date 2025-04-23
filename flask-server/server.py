@@ -2,7 +2,7 @@ import pymongo
 from flask import Response
 from bson.json_util import dumps
 from flask import Flask, request, jsonify
-from datetime import datetime
+from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 
 
@@ -11,20 +11,10 @@ app = Flask(__name__)
 
 @app.after_request
 def after_request(response):
-    # Allow your React app's origin OR use "*" to allow all
     response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
-    # Which methods are allowed
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    # Which headers can be sent (include Authorization if you use JWT)
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
     return response
-
-
-# app.config["MONGO_URI"] = "mongodb+srv://nweikl:qyQrov-gyxsi1-dejtov@csis3750.auwttdg.mongodb.net/csis3750_db?retryWrites=true&w=majority&appName=csis3750"
-# app.config["SECRET_KEY"] = "your_secret_key_here"
-#
-# mongo = PyMongo(app)
-# db = db
 
 
 client = pymongo.MongoClient(
@@ -47,34 +37,6 @@ def parse_object_ids(document):
         return str(document)
     else:
         return document
-
-
-# def token_required(f):
-#     @wraps(f)
-#     def decorated(*args, **kwargs):
-#         token = None
-#         # Extract token from Authorization header
-#         if 'Authorization' in request.headers:
-#             auth_header = request.headers['Authorization']
-#             if auth_header.startswith("Bearer "):
-#                 token = auth_header[7:]
-#
-#         if not token:
-#             return jsonify({"error": "Token is missing!"}), 401
-#
-#         try:
-#             # Decode token using the app secret
-#             # data = jwt.decode(token, app.config['SECRET_KEY'], algorithms=["HS256"])
-#             current_student = db.students.find_one({"_id": ObjectId(data["student_id"])})
-#             if not current_student:
-#                 raise Exception("Student not found")
-#         except Exception as e:
-#             return jsonify({"error": "Token is invalid!"}), 401
-#
-#         # Pass current_student to the route
-#         return f(current_student, *args, **kwargs)
-#
-#     return decorated
 
 
 @app.route('/signin', methods=['POST'])
@@ -111,7 +73,7 @@ def login():
         "message": "Login successful",
         "student_id": str(user['_id']),
         "username": user.get('username'),
-        "firstName": user.get('firstName'),
+        "firstName": user.get('firstName'),  # Safely gets 'username'
     }), 200
 
 
@@ -122,24 +84,28 @@ def serialize_doc(doc):
     return doc
 
 
-# ---------------------------------
-# Endpoints for dashboard, profile, courses, assignments, and notifications.
-# ---------------------------------
+@app.route('/test/student/<username>/todo', methods=['GET'])
+def get_todo(username):
+    try:
+        now = datetime.utcnow()
+        start_today = datetime(now.year, now.month, now.day)
+        end_tomorrow = start_today + timedelta(days=2)
 
-# @app.route('/api/student/<string:username>/dashboard', methods=['GET'])
-# def student_dashboard(username):
-#     student = db.students.find_one({"username": username})
-#     if not student:
-#         return jsonify({"error": "Student not found."}), 404
-#
-#     courses = list(db.courses.find({"username": username}))
-#     courses = [serialize_doc(c) for c in courses]
-#
-#     # You can extend this to include assignments/notifications later
-#     return jsonify({
-#         "student": serialize_doc(student),
-#         "courses": courses
-#     })
+        assignments = list(db.assignments.find({
+            "username": username,
+            "dueDate": {
+                "$gte": start_today,
+                "$lt": end_tomorrow
+            }
+        }))
+
+        for assignment in assignments:
+            assignment["_id"] = str(assignment["_id"])
+            assignment["dueDate"] = assignment["dueDate"].isoformat()
+
+        return jsonify(assignments), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/test/users/<string:username>', methods=['GET', 'PUT'])
@@ -216,6 +182,29 @@ def get_student_assignments(username, courseName):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route('/test/assignments/<string:assignment_id>/grade', methods=['PUT'])
+def update_assignment_grade(assignment_id):
+    try:
+        data = request.get_json()
+        new_grade = data.get('marksObtained')
+
+        if new_grade is None:
+            return jsonify({"error": "Missing marksObtained"}), 400
+
+        result = db.assignments.update_one(
+            {"_id": ObjectId(assignment_id)},
+            {"$set": {"marksObtained": new_grade}}
+        )
+
+        if result.modified_count == 0:
+            return jsonify({"error": "Assignment not found or grade unchanged"}), 404
+
+        return jsonify({"message": "Grade updated successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route('/test/assignments/<string:username>/<string:courseName>', methods=['GET'])
 def get_assignments_by_user_and_course(username, courseName):
     assignments = list(db.assignments.find({
@@ -249,21 +238,44 @@ def get_announcements(username, courseName):
         return jsonify({"error": str(e)}), 500
 
 
-# ✅ Post an announcement
+@app.route('/test/assignments', methods=['PUT'])
+def update_assignment_marks():
+    data = request.json
+    username = data.get("username")
+    courseName = data.get("courseName")
+    assignmentName = data.get("assignmentName")
+    marksObtained = data.get("marksObtained")
+
+    if not all([username, courseName, assignmentName]):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    result = db.assignments.update_one(
+        {"username": username, "courseName": courseName, "name": assignmentName},
+        {"$set": {"marksObtained": marksObtained}}
+    )
+
+    if result.modified_count == 1:
+        return jsonify({"message": "Marks updated successfully"}), 200
+    else:
+        return jsonify({"error": "Update failed or no change made"}), 400
+
+
+# ✅ Post an announcement with title support
 @app.route('/test/announcements', methods=['POST'])
 def post_announcement():
     try:
         data = request.json
 
-        # ✅ Validate required fields
-        if not all(k in data for k in ("username", "courseName", "message")):
+        # ✅ Validate required fields including "title"
+        if not all(k in data for k in ("username", "courseName", "message", "title")):
             return jsonify({"error": "Missing fields"}), 400
 
         announcement = {
             "username": data["username"],
             "courseName": data["courseName"],
+            "title": data["title"],  # ✅ Add title here
             "message": data["message"],
-            "createdAt": datetime.now()  # ✅ Correct use
+            "createdAt": datetime.now()  # ✅ Store timestamp
         }
 
         db.announcements.insert_one(announcement)
@@ -303,17 +315,42 @@ def student_notifications(student_id):
 # Endpoints for the student to-do page
 # ---------------------------------
 
-@app.route('/api/student/<username>/todo', methods=['GET'])
-def get_assignments_as_todos(username):
-    assignments = list(db.assignments.find({"username": username}))
-    todos = []
-    for a in assignments:
-        todos.append({
-            "title": a.get("name", "Untitled"),
-            "description": a.get("description", ""),
-            "due_date": a.get("dueDate")  # stored as ISO string
-        })
-    return jsonify(todos)
+@app.route('/api/student/<student_id>/todo', methods=['GET', 'POST'])
+def student_todo(student_id):
+    """
+    GET: Retrieve all to-do items for the student.
+    POST: Create a new to-do item. Required fields: title, due_date, class, and description.
+    """
+    try:
+        student_obj_id = ObjectId(student_id)
+    except Exception:
+        return jsonify({"error": "Invalid student ID format."}), 400
+
+    if request.method == 'GET':
+        # Retrieve all to-do items that belong to the student
+        todos = list(db.todos.find({"student_id": student_obj_id}))
+        todos = [serialize_doc(todo) for todo in todos]
+        return jsonify(todos)
+
+    elif request.method == 'POST':
+        data = request.get_json()
+        required_fields = ["title", "due_date", "class", "description"]
+        if not data or not all(field in data for field in required_fields):
+            return jsonify({"error": "Missing required fields. Required: title, due_date, class, description."}), 400
+
+        # Create a new to-do item; default 'completed' is False if not provided
+        new_todo = {
+            "student_id": student_obj_id,
+            "title": data.get("title"),
+            "due_date": data.get("due_date"),  # expects an ISO 8601 formatted string
+            "class": data.get("class"),
+            "description": data.get("description"),
+            "completed": data.get("completed", False)
+        }
+        result = db.todos.insert_one(new_todo)
+        new_todo['_id'] = str(result.inserted_id)
+        new_todo['student_id'] = str(new_todo['student_id'])
+        return jsonify(new_todo), 201
 
 
 @app.route('/api/student/<student_id>/todo/<todo_id>', methods=['PUT', 'DELETE'])
