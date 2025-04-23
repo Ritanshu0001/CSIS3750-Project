@@ -15,7 +15,6 @@ export default function Course() {
   const email = localStorage.getItem('email');
   const isTeacher = email && email.endsWith('@nova.edu');
 
-  // Fetch Assignments
   useEffect(() => {
     if (activeTab === 'Assignments') {
       fetch(`http://localhost:5000/test/assignments/${username}/${encodeURIComponent(courseName)}`)
@@ -25,7 +24,6 @@ export default function Course() {
     }
   }, [activeTab, username, courseName]);
 
-  // Fetch Announcements
   useEffect(() => {
     if (activeTab === 'Announcements') {
       fetch(`http://localhost:5000/test/announcements/${username}/${encodeURIComponent(courseName)}`)
@@ -35,7 +33,6 @@ export default function Course() {
     }
   }, [activeTab, username, courseName]);
 
-  // Fetch Students for Teachers
   useEffect(() => {
     if (isTeacher && activeTab === 'Students') {
       fetch(`http://localhost:5000/test/teacherclasses/${encodeURIComponent(courseName)}/${username}`)
@@ -45,14 +42,13 @@ export default function Course() {
     }
   }, [activeTab, isTeacher, courseName, username]);
 
-  // Submit New Announcement
   const handleAnnouncementSubmit = async (e) => {
     e.preventDefault();
     const payload = {
-      username, // Must match Flask
+      username,
       courseName,
       message: newAnnouncement,
-      title: newTitle // Optional (if backend stores it)
+      title: newTitle
     };
 
     const res = await fetch('http://localhost:5000/test/announcements', {
@@ -65,10 +61,10 @@ export default function Course() {
     if (res.ok) {
       setNewTitle('');
       setNewAnnouncement('');
-      setAnnouncements(prev => [...prev, {
-        ...payload,
-        createdAt: new Date().toISOString()
-      }]);
+      setAnnouncements(prev => [
+        ...prev,
+        { ...payload, createdAt: new Date().toISOString() }
+      ]);
     } else {
       alert(result.error || "Failed to post announcement.");
     }
@@ -118,9 +114,13 @@ export default function Course() {
             )}
             {announcements.map((a, i) => (
               <div className="assignment-row" key={i}>
-                <strong>{a.title}</strong>
+                <strong>{a.title || 'Announcement'}</strong>
                 <p>{a.message}</p>
-                <small>{a.createdAt ? new Date(a.createdAt).toLocaleDateString() : ''}</small>
+                <small>
+                  {a.createdAt && !isNaN(Date.parse(a.createdAt))
+                    ? new Date(a.createdAt).toLocaleString()
+                    : 'Date not available'}
+                </small>
               </div>
             ))}
           </div>
@@ -174,4 +174,5 @@ export default function Course() {
     </div>
   );
 }
+
 
