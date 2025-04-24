@@ -14,11 +14,9 @@ import MainPage from './MainPage';
 import AccountPage from './AccountPage';
 import Course from './Course';
 import StudentProfile from './StudentProfile';
-import ToDo from "./ToDo";
-import Assignment from './Assignment'; // ✅ this matches your file exactly
+import ToDo from './ToDo';
+import Assignment from './Assignment';
 
-
-// Adjust path as needed
 function Navbar({ isLoggedIn, setIsLoggedIn }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -40,7 +38,7 @@ function Navbar({ isLoggedIn, setIsLoggedIn }) {
 
   const handleLogout = () => {
     localStorage.removeItem('firstName');
-    localStorage.removeItem('student_id');
+    localStorage.removeItem('username');
     setIsLoggedIn(false);
     navigate('/signin');
   };
@@ -102,6 +100,9 @@ function App() {
         <Route path="/course/:courseName/students/:studentUsername" element={<StudentProfile />} />
         <Route path="/todo" element={<ToDo />} />
         <Route path="/add-assignment/:username/:courseName" element={<Assignment />} />
+        <Route path="/course/:username/:courseName/assignment/:assignmentName" element={<Assignment />} />
+        <Route path="/teacher/:courseName/assignment/:assignmentName/:studentUsername" element={<Assignment />} />
+
       </Routes>
     </Router>
   );

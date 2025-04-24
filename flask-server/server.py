@@ -4,6 +4,10 @@ from bson.json_util import dumps
 from flask import Flask, request, jsonify
 from datetime import datetime, timedelta
 from bson.objectid import ObjectId
+from base64 import b64encode
+from flask_cors import CORS
+app = Flask(__name__)
+CORS(app)  # Allow all cross-origin requests (for dev only)
 
 
 app = Flask(__name__)
@@ -337,7 +341,76 @@ def create_assignment():
         "insertedIds": inserted_ids
     }), 201
 
+from bson.binary import Binary  # Make sure this import is at the top
 
+#Upload an assignment 
+@app.route("/test/assignments/upload", methods=["POST"])
+def upload_assignment():
+    username = request.form.get("username")
+    courseName = request.form.get("courseName")
+    assignmentName = request.form.get("assignmentName")
+    uploadedFile = request.files.get("file")
+
+    if not uploadedFile:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file_data = uploadedFile.read()
+
+    result = db.assignments.update_one(
+        {"username": username, "courseName": courseName, "name": assignmentName},
+        {
+            "$set": {
+                "uploadedFileName": uploadedFile.filename,
+                "uploadedFileData": Binary(file_data)
+            }
+        }
+    )
+
+    if result.modified_count:
+        return jsonify({"message": "File uploaded successfully!"}), 200
+    else:
+        return jsonify({"error": "Assignment not found or update failed"}), 404
+
+@app.route('/test/assignments/submissions/<string:courseName>/<string:assignmentName>', methods=['GET'])
+def get_assignment_submissions(courseName, assignmentName):
+    try:
+        submissions = list(db.assignments.find({
+            "courseName": courseName,
+            "name": assignmentName,
+            "uploadedFileData": {"$ne": b""}
+        }, {
+            "username": 1,
+            "uploadedFileName": 1
+        }))
+
+        results = [{
+            "username": s["username"],
+            "filename": s.get("uploadedFileName", "submission")
+        } for s in submissions]
+
+        return jsonify(results), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+#download an assignment
+@app.route("/test/assignments/download/<string:username>/<string:courseName>/<string:assignmentName>", methods=["GET"])
+def download_assignment(username, courseName, assignmentName):
+    doc = db.assignments.find_one({
+        "username": username,
+        "courseName": courseName,
+        "name": assignmentName
+    })
+
+    if not doc or not doc.get("uploadedFileData"):
+        return jsonify({"error": "No submission found"}), 404
+
+    encoded_data = b64encode(doc["uploadedFileData"]).decode('utf-8')
+    return jsonify({
+        "filename": doc.get("uploadedFileName", "submission"),
+        "fileData": encoded_data
+    }), 200
 
 if __name__ == '__main__':
     app.run(debug=True)

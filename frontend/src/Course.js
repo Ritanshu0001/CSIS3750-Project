@@ -123,59 +123,69 @@ export default function Course() {
         );
 
       case 'Assignments':
-        return (
-          <>
-            <h2>Assignments for {courseName}</h2>
-            {isTeacher && (
-              <button
-                className="add-btn"
-                onClick={goToAddAssignmentTab}
-                style={{ marginBottom: '20px' }}
-              >
-                ➕ Add Assignment
-              </button>
-            )}
-            <div className="announcement-wrapper">
-              {assignments.length === 0 ? (
-                  <p>No assignments posted yet.</p>
-              ) : (
-                assignments.map((a, i) => (
-                  <div className="announcement-item assignment-item-row" key={a._id || i}>
-                    <div className="assignment-left">
-                      <strong>{a.name}</strong>
-                       {/* Optionally display description or other details here */}
-                       {/* <p style={{ fontSize: '0.9em', color: '#555' }}>{a.description}</p> */}
-                    </div>
-                    <div className="assignment-right">
-                      {/* Updated Due Date Display to include Time */}
-                      <span>
-                        Due: {
-                          a.dueDate && a.dueDate.$date
-                            ? new Date(a.dueDate.$date).toLocaleString('en-US', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                hour12: true
-                              })
-                            : 'Date not available'
-                        }
-                      </span>
-
-
-                      <img
-                        style={{ width: "20px", height: "20px", marginLeft: '10px' }}
-                        src={a.marksObtained !== undefined ? "/checkmark.png" : "/circle1.png"}
-                        alt={a.marksObtained !== undefined ? "Completed" : "Pending"}
-                      />
-                    </div>
-                  </div>
-                ))
+          return (
+            <>
+              <h2>Assignments for {courseName}</h2>
+              {isTeacher && (
+                <button
+                  className="add-btn"
+                  onClick={goToAddAssignmentTab}
+                  style={{ marginBottom: '20px' }}
+                >
+                  ➕ Add Assignment
+                </button>
               )}
-            </div>
-          </>
-        );
+              <div className="announcement-wrapper">
+                {assignments.length === 0 ? (
+                  <p>No assignments posted yet.</p>
+                ) : (
+                  assignments.map((a, i) => (
+                    <div
+                      key={a._id || i}
+                      className="announcement-item assignment-item-row"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() =>
+                        navigate(
+                          `/course/${encodeURIComponent(username)}/${encodeURIComponent(courseName)}/assignment/${encodeURIComponent(a.name)}`
+                        )
+                      }
+                    >
+                      <div className="assignment-left">
+                        <strong>{a.name}</strong>
+                      </div>
+                      <div className="assignment-right">
+                        <span>
+                          Due:{" "}
+                          {a.dueDate && a.dueDate.$date
+                            ? new Date(a.dueDate.$date).toLocaleString("en-US", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                hour12: true,
+                              })
+                            : "Date not available"}
+                        </span>
+                        <img
+                          style={{ width: "20px", height: "20px", marginLeft: "10px" }}
+                          src={
+                            a.marksObtained !== undefined
+                              ? "/checkmark.png"
+                              : "/circle1.png"
+                          }
+                          alt={
+                            a.marksObtained !== undefined ? "Completed" : "Pending"
+                          }
+                        />
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+         );
+        
 
       case 'AddAssignment':
         return (

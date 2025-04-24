@@ -1,116 +1,119 @@
+import './Assignment.css';
 import { useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 
 export default function Assignment() {
-  const { id } = useParams();
+  const { username, courseName, assignmentName } = useParams();
   const [assignment, setAssignment] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    totalMarks: '',
-    dueDate: '',
-  });
+  const [file, setFile] = useState(null);
+  const [submissions, setSubmissions] = useState([]);
+
+  const email = localStorage.getItem('email');
+  const loggedInUsername = localStorage.getItem('username');
+  const isTeacher = email && email.endsWith('@nova.edu');
 
   useEffect(() => {
-    fetch(`http://localhost:5000/test/assignment/${id}`)
+    const targetUsername = isTeacher ? 'teacher' : loggedInUsername;
+    fetch(`http://localhost:5000/test/assignments/${targetUsername}/${encodeURIComponent(courseName)}`)
       .then(res => res.json())
       .then(data => {
-        setAssignment(data);
+        if (Array.isArray(data)) {
+          const match = data.find(a => a.name === assignmentName);
+          setAssignment(match || null);
+        }
         setLoading(false);
       })
       .catch(err => {
         console.error("Error fetching assignment:", err);
         setLoading(false);
       });
-  }, [id]);
+  }, [isTeacher, loggedInUsername, courseName, assignmentName]);
 
-  const handleAddAssignment = () => {
-    setShowForm(true);
-  };
+  useEffect(() => {
+    if (isTeacher) {
+      fetch(`http://localhost:5000/test/assignments/submissions/${encodeURIComponent(courseName)}/${assignmentName}`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) setSubmissions(data);
+        })
+        .catch(err => console.error("Error fetching submissions:", err));
+    }
+  }, [isTeacher, courseName, assignmentName]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  const handleUpload = async () => {
+    if (!file) return alert("Please select a file first.");
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("username", loggedInUsername);
+    formData.append("courseName", courseName);
+    formData.append("assignmentName", assignmentName);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const payload = {
-      ...formData,
-      totalMarks: parseInt(formData.totalMarks),
-      username: localStorage.getItem('username'),
-      courseName: assignment.courseName
-    };
-    const res = await fetch('http://localhost:5000/test/assignments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+    const res = await fetch("http://localhost:5000/test/assignments/upload", {
+      method: "POST",
+      body: formData
     });
+
     const result = await res.json();
     if (res.ok) {
-      alert('Assignment added successfully!');
-      setShowForm(false);
+      alert("Submitted!");
+      setAssignment(prev => ({ ...prev, uploadedFileName: file.name }));
     } else {
-      alert(result.error || 'Failed to add assignment.');
+      alert("Submission failed: " + result.error);
     }
   };
 
-  if (loading) return <div className="assignment-box">Loading assignment details...</div>;
+  const handleDownload = async (studentUsername) => {
+    const res = await fetch(`http://localhost:5000/test/assignments/download/${studentUsername}/${encodeURIComponent(courseName)}/${assignmentName}`);
+    const data = await res.json();
+    if (res.ok && data.fileData) {
+      const link = document.createElement('a');
+      link.href = `data:application/octet-stream;base64,${data.fileData}`;
+      link.download = data.filename || `${studentUsername}_submission`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      alert("Download failed.");
+    }
+  };
 
-  if (!assignment || assignment.error) return <div className="assignment-box">Assignment not found.</div>;
+  const formattedDate = assignment?.dueDate
+    ? new Date(assignment.dueDate.$date || assignment.dueDate).toLocaleString('en-US', {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit', hour12: true,
+      })
+    : 'No due date';
+
+  if (loading) return <div className="assignment-box">Loading...</div>;
+  if (!assignment) return <div className="assignment-box">Assignment not found.</div>;
 
   return (
     <div className="assignment-box">
       <h2>{assignment.name}</h2>
-      <p>{assignment.description}</p>
-      <p>Due: {new Date(assignment.dueDate).toLocaleDateString()}</p>
-      <p>Total Marks: {assignment.totalMarks}</p>
+      <p><strong>Description:</strong> {assignment.description}</p>
+      <p><strong>Due:</strong> {formattedDate}</p>
+      <p><strong>Total Marks:</strong> {assignment.totalMarks}</p>
+      <p><strong>Created By:</strong> {assignment.username}</p>
+      <p><strong>Course:</strong> {assignment.courseName}</p>
 
-      <button onClick={handleAddAssignment}>Add New Assignment</button>
+      {!isTeacher && (
+        <div className="upload-section">
+          <input type="file" onChange={(e) => setFile(e.target.files[0])} />
+          <button className="upload-btn" onClick={handleUpload}>📤 Submit Assignment</button>
+        </div>
+      )}
 
-      {showForm && (
-        <form onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
-          <input
-            name="name"
-            placeholder="Assignment Name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
-          <textarea
-            name="description"
-            placeholder="Description"
-            value={formData.description}
-            onChange={handleChange}
-            required
-          />
-          <input
-            name="totalMarks"
-            type="number"
-            placeholder="Total Marks"
-            value={formData.totalMarks}
-            onChange={handleChange}
-            required
-          />
-          <input
-            name="dueDate"
-            type="date"
-            value={formData.dueDate}
-            onChange={handleChange}
-            required
-          />
-          <input
-            name="dueTime"
-            type="time"
-            value={formData.dueTime}
-            onChange={handleChange}
-            required
-          />
-
-          <button type="submit">Submit Assignment</button>
-        </form>
+      {isTeacher && submissions.length > 0 && (
+        <div className="submissions">
+          <h3>Student Submissions</h3>
+          {submissions.map((s, i) => (
+            <div key={i} className="submission-item">
+              <span><strong>{s.username}</strong> - {s.filename}</span>
+              <button className="download-btn" onClick={() => handleDownload(s.username)}>⬇️ Download</button>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
