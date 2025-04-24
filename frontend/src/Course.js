@@ -37,12 +37,18 @@ export default function Course() {
   // Fetch announcements when Announcements tab is active
   useEffect(() => {
     if (activeTab === 'Announcements') {
-      fetch(`http://localhost:5000/test/announcements/${username}/${encodeURIComponent(courseName)}`)
+      const isTeacher = email && email.endsWith('@nova.edu');
+      const url = isTeacher
+        ? `http://localhost:5000/test/announcements/course/${encodeURIComponent(courseName)}`
+        : `http://localhost:5000/test/announcements/${username}/${encodeURIComponent(courseName)}`;
+
+      fetch(url)
         .then(res => res.json())
         .then(data => setAnnouncements(Array.isArray(data) ? data : []))
         .catch(err => console.error("Error fetching announcements:", err));
     }
-  }, [activeTab, username, courseName]);
+  }, [activeTab, courseName, username]);
+
 
   // Fetch students when Students tab is active (for teachers)
   useEffect(() => {
@@ -110,31 +116,32 @@ export default function Course() {
           <>
             <h2>Welcome to {courseName}</h2>
             {/* ... Home content ... */}
-             <ul>
-               <li>My name is [Instructor Name] and I will be your instructor for this course.</li>
-               <li><strong>Course Description</strong><br />An introduction to the principles and practices of [subject name].</li>
-               <li><strong>Getting Started</strong><ul>
-                 <li>Review the full course syllabus.</li>
-                 <li>Check the weekly course schedule.</li>
-                 <li>Obtain access to the required textbook.</li>
-               </ul></li>
-             </ul>
+              <ul>
+                <li>My name is [Instructor Name] and I will be your instructor for this course.</li>
+                <li><strong>Course Description</strong><br />An introduction to the principles and practices of [subject name].</li>
+                <li><strong>Getting Started</strong><ul>
+                    <li>Review the full course syllabus.</li>
+                    <li>Check the weekly course schedule.</li>
+                    <li>Obtain access to the required textbook.</li>
+                </ul></li>
+              </ul>
           </>
         );
 
       case 'Assignments':
           return (
             <>
-              <h2>Assignments for {courseName}</h2>
-              {isTeacher && (
-                <button
-                  className="add-btn"
-                  onClick={goToAddAssignmentTab}
-                  style={{ marginBottom: '20px' }}
-                >
-                  ➕ Add Assignment
-                </button>
-              )}
+              <div className="course-content">
+                <h2>Assignments for {courseName}</h2>
+                {/* assignment list here */}
+                {isTeacher && (
+                  <button className="floating-add-button" onClick={goToAddAssignmentTab}>
+                    ＋
+                  </button>
+                )}
+              </div>
+
+
               <div className="announcement-wrapper">
                 {assignments.length === 0 ? (
                   <p>No assignments posted yet.</p>
@@ -185,179 +192,181 @@ export default function Course() {
               </div>
             </>
          );
-        
 
-      case 'AddAssignment':
-        return (
-          <div className="assignment-form">
-            <h2>Create New Assignment</h2>
-            {/* Updated form submission logic */}
-            <form
+
+        case 'AddAssignment':
+          return (
+            <div className="assignment-form">
+              <h2>Create New Assignment</h2>
+              <form
                 onSubmit={async (e) => {
-                    e.preventDefault(); // Prevent default page reload
+                  e.preventDefault();
+                  const { dueDate, dueTime, name, description, totalMarks } = newAssignment;
 
-                    const { dueDate, dueTime, name, description, totalMarks } = newAssignment;
+                  if (!dueDate || !dueTime) {
+                    alert("Please select both a due date and a due time.");
+                    return;
+                  }
 
-                    // Basic validation for date and time presence
-                    if (!dueDate || !dueTime) {
-                        alert('Please select both a due date and a due time.');
-                        return; // Stop submission
-                    }
+                  const combinedDateTime = new Date(`${dueDate}T${dueTime}`);
+                  if (isNaN(combinedDateTime.getTime())) {
+                    alert("Invalid date or time selected. Please check your inputs.");
+                    return;
+                  }
 
-                    // Combine date and time strings and create a Date object
-                    const combinedDateTime = new Date(`${dueDate}T${dueTime}`);
+                  const isoDueDate = combinedDateTime.toISOString();
+                  const payload = {
+                    name,
+                    description,
+                    totalMarks: Number(totalMarks),
+                    dueDate: isoDueDate,
+                    username,
+                    courseName,
+                  };
 
-                    // Validate if the combined date/time is valid
-                    if (isNaN(combinedDateTime.getTime())) {
-                         alert('Invalid date or time selected. Please check your inputs.');
-                         return; // Stop submission
-                    }
+                  try {
+                    const res = await fetch("http://localhost:5000/test/assignments", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify(payload),
+                    });
 
-                    // Convert the combined Date object to an ISO 8601 string
-                    const isoDueDate = combinedDateTime.toISOString();
-
-                    // Construct payload using the combined ISO date and other form data
-                    const payload = {
-                      name: name,
-                      description: description,
-                      totalMarks: Number(totalMarks), // Ensure it's a number
-                      dueDate: isoDueDate, // Use the combined ISO string
-                      username: username, // From useParams (logged-in user) - consistent with fetches
-                      courseName: courseName, // From useParams
-                    };
-
-                    try {
-                      // Send POST request to the backend
-                      const res = await fetch('http://localhost:5000/test/assignments', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify(payload),
-                      });
-
-                      const result = await res.json(); // Parse the JSON response
-
-                      if (res.ok) {
-                          // Success: Show alert, go back to list, update state
-                          alert('Assignment created successfully!'); // Updated alert message
-                          setActiveTab('Assignments'); // Switch back to the assignments list view
-
-                          // Add the newly created assignment(s) to the local state
-                          // Use result directly if backend returns the created object(s),
-                          // otherwise reconstruct using payload and result IDs.
-                          // Assuming result contains the new assignment ID(s) in insertedIds:
-                          if (result.insertedIds && Array.isArray(result.insertedIds)) {
-                              setAssignments(prev => [...prev, ...result.insertedIds.map(id => ({ _id: id, ...payload }))]);
-                          } else {
-                              // Fallback if insertedIds isn't as expected, add based on payload
-                              // Might need adjustment based on actual backend response
-                              console.warn("Backend did not return expected insertedIds array. Adding assignment locally based on payload.");
-                              setAssignments(prev => [...prev, { _id: Date.now(), ...payload }]); // Use timestamp as temp key
-                          }
-
-                          // Resetting the form is handled by goToAddAssignmentTab when navigating *to* this tab next time.
+                    const result = await res.json();
+                    if (res.ok) {
+                      alert("Assignment created successfully!");
+                      setActiveTab("Assignments");
+                      if (result.insertedIds && Array.isArray(result.insertedIds)) {
+                        setAssignments((prev) => [
+                          ...prev,
+                          ...result.insertedIds.map((id) => ({ _id: id, ...payload })),
+                        ]);
                       } else {
-                          // Failure: Show error from backend or generic message
-                          alert(result.error || 'Failed to create assignment.');
+                        setAssignments((prev) => [
+                          ...prev,
+                          { _id: Date.now(), ...payload },
+                        ]);
                       }
-                    } catch (err) {
-                      // Network or other errors during fetch
-                      alert("Error creating assignment: " + err.message);
+                    } else {
+                      alert(result.error || "Failed to create assignment.");
                     }
+                  } catch (err) {
+                    alert("Error creating assignment: " + err.message);
+                  }
                 }}
-            >
-                {/* Input fields use the generic handler */}
+              >
                 <label>Name:</label>
                 <input
-                    name="name" // Add name attribute
-                    type="text"
-                    placeholder="Assignment Name"
-                    value={newAssignment.name}
-                    onChange={handleAssignmentChange} // Use generic handler
-                    required
+                  name="name"
+                  type="text"
+                  placeholder="Assignment Name"
+                  value={newAssignment.name}
+                  onChange={handleAssignmentChange}
+                  required
                 />
-                 <label>Description:</label>
+
+                <label>Description:</label>
                 <textarea
-                    name="description" // Add name attribute
-                    placeholder="Description"
-                    value={newAssignment.description}
-                    onChange={handleAssignmentChange} // Use generic handler
-                    required
+                  name="description"
+                  placeholder="Description"
+                  value={newAssignment.description}
+                  onChange={handleAssignmentChange}
+                  required
                 />
+
                 <label>Total Marks:</label>
                 <input
-                    name="totalMarks" // Add name attribute
-                    type="number"
-                    placeholder="Total Marks"
-                    value={newAssignment.totalMarks}
-                    onChange={handleAssignmentChange} // Use generic handler
-                    required
-                    min="0"
+                  name="totalMarks"
+                  type="number"
+                  placeholder="Total Marks"
+                  value={newAssignment.totalMarks}
+                  onChange={handleAssignmentChange}
+                  required
+                  min="0"
                 />
-                {/* Group Date and Time inputs */}
-                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                    <div style={{ flex: 1 }}>
-                        <label htmlFor="dueDate">Due Date:</label>
-                        <input
-                            id="dueDate"
-                            name="dueDate" // Add name attribute
-                            type="date"
-                            value={newAssignment.dueDate}
-                            onChange={handleAssignmentChange} // Use generic handler
-                            required
-                            style={{ width: '100%' }}
-                        />
-                    </div>
-                     {/* Added Time Input Field */}
-                    <div style={{ flex: 1 }}>
-                        <label htmlFor="dueTime">Due Time:</label>
-                        <input
-                            id="dueTime"
-                            name="dueTime" // Add name attribute for the generic handler
-                            type="time"
-                            value={newAssignment.dueTime}
-                            onChange={handleAssignmentChange} // Use generic handler
-                            required
-                            style={{ width: '100%' }}
-                        />
-                    </div>
+
+                <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                  <div style={{ flex: 1 }}>
+                    <label htmlFor="dueDate">Due Date:</label>
+                    <input
+                      id="dueDate"
+                      name="dueDate"
+                      type="date"
+                      value={newAssignment.dueDate}
+                      onChange={handleAssignmentChange}
+                      required
+                      style={{ width: "100%" }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label htmlFor="dueTime">Due Time:</label>
+                    <input
+                      id="dueTime"
+                      name="dueTime"
+                      type="time"
+                      value={newAssignment.dueTime}
+                      onChange={handleAssignmentChange}
+                      required
+                      style={{ width: "100%" }}
+                    />
+                  </div>
                 </div>
 
-                {/* Submit/Cancel Buttons */}
-                 <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between' }}>
-                    <button type="submit">Create Assignment</button>
-                    <button type="button" onClick={() => setActiveTab('Assignments')}>Cancel</button>
+                <div className="form-actions" style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "20px" }}>
+                <button type="submit" className="submit-btn">Create Assignment</button>
+                <button type="button" className="cancel-btn" onClick={() => setActiveTab("Assignments")}>
+                  Cancel
+                </button>
                 </div>
-            </form>
-          </div>
-        );
+              </form>
+            </div>
+          );
 
       case 'Announcements':
-        return (
-          <>
-            <h2>Announcements for {courseName}</h2>
-            {/* ... Announcements content ... */}
-             <div className="announcement-wrapper">
-               {isTeacher && (
-                 <form onSubmit={handleAnnouncementSubmit} className="announcement-form">
-                   <input type="text" placeholder="Title" value={newTitle} onChange={e => setNewTitle(e.target.value)} required />
-                   <textarea placeholder="Write your announcement..." value={newAnnouncement} onChange={e => setNewAnnouncement(e.target.value)} required />
-                   <button type="submit">Post Announcement</button>
-                 </form>
-               )}
-               {announcements.length === 0 ? (
-                   <p>No announcements posted yet.</p>
-               ) : (
-                   [...announcements].reverse().map((a, i) => (
-                       <div className="announcement-item" key={i}>
-                           <strong>{a.title || 'Announcement'}</strong>
-                           <p>{a.message}</p>
-                           <small>{a.createdAt && !isNaN(Date.parse(a.createdAt)) ? new Date(a.createdAt).toLocaleString() : 'Date not available'}</small>
-                       </div>
-                   ))
-               )}
-             </div>
-          </>
-        );
+          return (
+            <>
+              <div className="announcement-form-box">
+                <h2>Announcements for {courseName}</h2>
+
+                {isTeacher && (
+                  <form onSubmit={handleAnnouncementSubmit} className="announcement-form">
+                    <input
+                      type="text"
+                      placeholder="Title"
+                      value={newTitle}
+                      onChange={e => setNewTitle(e.target.value)}
+                      required
+                    />
+                    <textarea
+                      placeholder="Write your announcement..."
+                      value={newAnnouncement}
+                      onChange={e => setNewAnnouncement(e.target.value)}
+                      required
+                    />
+                    <button type="submit">Post Announcement</button>
+                  </form>
+                )}
+              </div>
+
+              <div className="announcement-posts">
+                {announcements.length === 0 ? (
+                  <p style={{ marginTop: '20px', color: '#333' }}>No announcements posted yet.</p>
+                ) : (
+                  [...announcements].reverse().map((a, i) => (
+                    <div className="announcement-item" key={i}>
+                      <strong>{a.title || 'Announcement'}</strong>
+                      <p>{a.message}</p>
+                      <small>
+                        {a.createdAt && !isNaN(Date.parse(a.createdAt))
+                          ? new Date(a.createdAt).toLocaleString()
+                          : 'Date not available'}
+                      </small>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+       );
+
 
       case 'Grades':
         // ... Grades content ...
@@ -394,26 +403,28 @@ export default function Course() {
 
 
       case 'Students':
-        // ... Students content ...
-        return (
-             <>
-                 <h2>Students in {courseName}</h2>
-                 <div className="announcement-wrapper">
-                     {students.length === 0 ? (
-                         <p>No students found for this course.</p>
-                     ) : (
-                         students.map((s, i) => (
-                         <div className="assignment-item-row" key={s.username || i}>
-                             <div className="assignment-left">{s.firstName} {s.lastName}</div>
-                             <div className="assignment-right">
-                             <button className="view-button" onClick={() => handleViewStudent(s.username)}>View Profile</button>
-                             </div>
-                         </div>
-                         ))
-                     )}
-                 </div>
-             </>
+          return (
+            <>
+              <h2>Students in {courseName}</h2>
+              <div className="announcement-wrapper">
+                {students.length === 0 ? (
+                  <p>No students found for this course.</p>
+                ) : (
+                  students.map((s, i) => (
+                    <div className="assignment-item-row" key={s.username || i}>
+                      <div className="assignment-left">
+                        {s.firstName} {s.lastName}
+                      </div>
+                      <div className="assignment-right">
+                        <button className="view-button" onClick={() => handleViewStudent(s.username)}>View Profile</button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
          );
+        
 
       case 'Syllabus':
         // ... Syllabus content ...
@@ -437,47 +448,47 @@ export default function Course() {
   return (
     <div className="course-page">
       <div className="sidebar">
-         {/* ... Sidebar ... */}
+          {/* ... Sidebar ... */}
           <ul>
            {tabs.map(tab => (
              <li key={tab} onClick={() => setActiveTab(tab)} className={(activeTab === tab || (activeTab === 'AddAssignment' && tab === 'Assignments')) ? 'active' : ''}>{tab}</li>
            ))}
-         </ul>
-         <img src="/books.png" alt="Books" />
+          </ul>
+          <img src="/books.png" alt="Books" />
       </div>
 
       <div className="course-content">{renderContent()}</div>
 
       {/* Contextual Cards */}
       {/* ... Instructor Card Logic ... */}
-       {activeTab === 'Home' && (
-         <div className="instructor-card">
-           <img src="/professor.png" alt="Instructor" />
-           <h3>Professor Muhammad</h3>
-           <p>Canvas Inbox: Response time within 24–48 hours M–F.<br />Office Hours: By appointment<br /><br />Canvas Help:<br />• 1-844-865-2568<br />• Chat, Help Guides, Support Portal</p>
-         </div>
-       )}
-       {(activeTab === 'Assignments' || activeTab === 'AddAssignment') && (
-         <div className="instructor-card">
-           <img src="/assignment.png" alt="Assignments" />
-           <h3>Assignment Info</h3>
-           <p>• Submit through Canvas<br />
-             • Allowed formats: .docx, .pdf<br />
-             • Late work may not be accepted
-           </p>
-         </div>
-       )}
-       {activeTab === 'Announcements' && (
-         <div className="instructor-card">
-           <img src="/professor.png" alt="Announcements" />
-           <h3>Professor Muhammad</h3>
-           <p>• Check announcements weekly<br />
-             • Refresh for updates<br />
-             • Email for urgent info
-           </p>
-         </div>
-       )}
-       {activeTab === 'Grades' && !isTeacher && (
+        {activeTab === 'Home' && (
+          <div className="instructor-card">
+            <img src="/professor.png" alt="Instructor" />
+            <h3>Professor Muhammad</h3>
+            <p>Canvas Inbox: Response time within 24–48 hours M–F.<br />Office Hours: By appointment<br /><br />Canvas Help:<br />• 1-844-865-2568<br />• Chat, Help Guides, Support Portal</p>
+          </div>
+        )}
+        {(activeTab === 'Assignments' || activeTab === 'AddAssignment') && (
+          <div className="instructor-card">
+            <img src="/assignment.png" alt="Assignments" />
+            <h3>Assignment Info</h3>
+            <p>• Submit through Canvas<br />
+               • Allowed formats: .docx, .pdf<br />
+               • Late work may not be accepted
+            </p>
+          </div>
+        )}
+        {activeTab === 'Announcements' && (
+          <div className="instructor-card">
+            <img src="/professor.png" alt="Announcements" />
+            <h3>Professor Muhammad</h3>
+            <p>• Check announcements weekly<br />
+               • Refresh for updates<br />
+               • Email for urgent info
+            </p>
+          </div>
+        )}
+        {activeTab === 'Grades' && !isTeacher && (
              <div className="instructor-card">
                  <img src="/grade_info.png" alt="Grades Info" />
                  <h3>Grade Information</h3>

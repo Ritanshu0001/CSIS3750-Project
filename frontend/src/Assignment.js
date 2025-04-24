@@ -35,7 +35,9 @@ export default function Assignment() {
       fetch(`http://localhost:5000/test/assignments/submissions/${encodeURIComponent(courseName)}/${assignmentName}`)
         .then(res => res.json())
         .then(data => {
-          if (Array.isArray(data)) setSubmissions(data);
+          if (Array.isArray(data)) {
+            setSubmissions(data);
+          }
         })
         .catch(err => console.error("Error fetching submissions:", err));
     }
@@ -49,17 +51,21 @@ export default function Assignment() {
     formData.append("courseName", courseName);
     formData.append("assignmentName", assignmentName);
 
-    const res = await fetch("http://localhost:5000/test/assignments/upload", {
-      method: "POST",
-      body: formData
-    });
+    try {
+      const res = await fetch("http://localhost:5000/test/assignments/upload", {
+        method: "POST",
+        body: formData
+      });
 
-    const result = await res.json();
-    if (res.ok) {
-      alert("Submitted!");
-      setAssignment(prev => ({ ...prev, uploadedFileName: file.name }));
-    } else {
-      alert("Submission failed: " + result.error);
+      const result = await res.json();
+      if (res.ok) {
+        alert("Submitted!");
+        setAssignment(prev => ({ ...prev, uploadedFileName: file.name }));
+      } else {
+        alert("Submission failed: " + result.error);
+      }
+    } catch (err) {
+      alert("Upload error: " + err.message);
     }
   };
 
@@ -90,12 +96,14 @@ export default function Assignment() {
 
   return (
     <div className="assignment-box">
-      <h2>{assignment.name}</h2>
-      <p><strong>Description:</strong> {assignment.description}</p>
-      <p><strong>Due:</strong> {formattedDate}</p>
-      <p><strong>Total Marks:</strong> {assignment.totalMarks}</p>
-      <p><strong>Created By:</strong> {assignment.username}</p>
-      <p><strong>Course:</strong> {assignment.courseName}</p>
+      <div className="assignment-details">
+        <h2>{assignment.name}</h2>
+        <p><strong>Description:</strong> {assignment.description}</p>
+        <p><strong>Due:</strong> {formattedDate}</p>
+        <p><strong>Total Marks:</strong> {assignment.totalMarks}</p>
+        <p><strong>Created By:</strong> {assignment.username}</p>
+        <p><strong>Course:</strong> {assignment.courseName}</p>
+      </div>
 
       {!isTeacher && (
         <div className="upload-section">
@@ -108,8 +116,11 @@ export default function Assignment() {
         <div className="submissions">
           <h3>Student Submissions</h3>
           {submissions.map((s, i) => (
-            <div key={i} className="submission-item">
-              <span><strong>{s.username}</strong> - {s.filename}</span>
+            <div key={i} className="submission-item vertical">
+              <div className="submission-info">
+                <strong>{s.firstName} {s.lastName}</strong><br />
+                <em>{s.filename}</em>
+              </div>
               <button className="download-btn" onClick={() => handleDownload(s.username)}>⬇️ Download</button>
             </div>
           ))}

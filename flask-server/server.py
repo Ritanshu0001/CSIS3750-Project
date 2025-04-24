@@ -329,7 +329,7 @@ def create_assignment():
             "courseName": course_name,
             "username": username,
             "createdAt": datetime.utcnow(),
-            "marksObtained": 0,
+            "marksObtained": None,
             "uploadedFileName": "",
             "uploadedFileData": b""
         }
@@ -370,25 +370,42 @@ def upload_assignment():
         return jsonify({"message": "File uploaded successfully!"}), 200
     else:
         return jsonify({"error": "Assignment not found or update failed"}), 404
+from bson import ObjectId
 
 @app.route('/test/assignments/submissions/<string:courseName>/<string:assignmentName>', methods=['GET'])
 def get_assignment_submissions(courseName, assignmentName):
     try:
+        # Find all assignments with a file uploaded
         submissions = list(db.assignments.find({
             "courseName": courseName,
             "name": assignmentName,
-            "uploadedFileData": {"$ne": b""}
-        }, {
-            "username": 1,
-            "uploadedFileName": 1
+            "uploadedFileName": {"$ne": ""}
         }))
 
-        results = [{
-            "username": s["username"],
-            "filename": s.get("uploadedFileName", "submission")
-        } for s in submissions]
+        # Extract all usernames
+        usernames = [s["username"] for s in submissions]
 
-        return jsonify(results), 200
+        # Get full name info for each username
+        user_details = list(db.users.find({"username": {"$in": usernames}}))
+        user_map = {
+            u["username"]: {
+                "firstName": u.get("firstName", ""),
+                "lastName": u.get("lastName", "")
+            } for u in user_details
+        }
+
+        # Format response and strip unneeded/binary fields
+        response = []
+        for s in submissions:
+            response.append({
+                "_id": str(s["_id"]),
+                "username": s["username"],
+                "filename": s.get("uploadedFileName", ""),
+                "firstName": user_map.get(s["username"], {}).get("firstName", ""),
+                "lastName": user_map.get(s["username"], {}).get("lastName", "")
+            })
+
+        return jsonify(response), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -411,6 +428,18 @@ def download_assignment(username, courseName, assignmentName):
         "filename": doc.get("uploadedFileName", "submission"),
         "fileData": encoded_data
     }), 200
+
+#get announcement
+@app.route('/test/announcements/course/<string:courseName>', methods=['GET'])
+def get_announcements_by_course(courseName):
+    try:
+        announcements = list(db.announcements.find({
+            "courseName": {"$regex": f"^{courseName}$", "$options": "i"}
+        }))
+        return jsonify([serialize_doc(a) for a in announcements]), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
