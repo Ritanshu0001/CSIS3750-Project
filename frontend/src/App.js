@@ -15,7 +15,10 @@ import AccountPage from './AccountPage';
 import Course from './Course';
 import StudentProfile from './StudentProfile';
 import ToDo from "./ToDo";
+import Assignment from './Assignment'; // ✅ this matches your file exactly
 
+
+// Adjust path as needed
 function Navbar({ isLoggedIn, setIsLoggedIn }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -98,6 +101,7 @@ function App() {
         <Route path="/course/:username/:courseName" element={<Course />} />
         <Route path="/course/:courseName/students/:studentUsername" element={<StudentProfile />} />
         <Route path="/todo" element={<ToDo />} />
+        <Route path="/add-assignment/:username/:courseName" element={<Assignment />} />
       </Routes>
     </Router>
   );

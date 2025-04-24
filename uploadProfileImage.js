@@ -7,8 +7,8 @@ const { MongoClient } = require('mongodb');
 const uri = 'mongodb+srv://ritanshu:Qwertyuiop%401@csis3750.auwttdg.mongodb.net/?retryWrites=true&w=majority&appName=csis3750';
 const dbName = 'test';            // Your MongoDB database name
 const collectionName = 'users';          // Your users collection
-const usernameToUpdate = 'jm6013';       // Username to update
-const imagePath = './profile.jpeg';       // Path to your local image file
+const usernameToUpdate = 'teacher';       // Username to update
+const imagePath = './3.jpeg';       // Path to your local image file
 
 async function run() {
   try {
