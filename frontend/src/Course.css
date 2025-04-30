@@ -430,3 +430,163 @@ input[type="time"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
   opacity: 0.6;
 }
+/* just the new bits */
+.overall-grade-pill {
+  background: white;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-size: 24px;
+  font-weight: bold;
+  color: green;
+  display: inline-block;
+  margin-top: 10px;
+}
+.date-time-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+/* A white, rounded card with a subtle shadow */
+.grade-summary-box {
+  background: #fff;                /* white background */
+  border-radius: 12px;             /* rounded corners */
+  padding: 20px;                   /* inner spacing */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* soft drop shadow */
+  text-align: center;              /* center its contents */
+  max-width: 260px;                /* optional, to limit width */
+  margin: 0 auto;                  /* center horizontally inside sidebar */
+}
+
+.grade-summary-box h3 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+}
+
+.grade-summary-box .grade-badge {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333;
+}
+.grade-percentage-box {
+  display: inline-block;            /* shrink to fit the text */
+  background: #fff;                 /* white background */
+  border-radius: 12px;              /* rounded corners */
+  padding: 8px 16px;                /* vertical/horizontal spacing */
+  font-size: 1.8rem;                /* larger number */
+  font-weight: bold;                /* stand out */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* subtle drop shadow */
+  margin-top: 8px;                  /* space from the heading */
+}
+.view-profile-button {
+  background-color: #1e73be;     /* a nice blue accent */
+  color: #fff;                   /* white text */
+  border: none;                  /* remove default border */
+  border-radius: 8px;            /* pill corners */
+  padding: 6px 14px;             /* vertical | horizontal */
+  font-size: 0.9rem;             /* match your text scale */
+  font-weight: 500;              /* a bit bolder */
+  cursor: pointer;               /* pointer on hover */
+  transition: background-color .2s ease, transform .1s ease;
+}
+
+.view-profile-button:hover {
+  background-color: #155a8a;     /* darker on hover */
+  transform: translateY(-1px);   /* subtle lift */
+}
+
+.view-profile-button:active {
+  background-color: #134f72;
+  transform: translateY(0);
+}
+/* ───────────── Course.css ───────────── */
+
+.course-content h2 {
+  margin-bottom: 1rem;
+}
+
+/* Syllabus form container */
+.syllabus-form {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* File-picker button */
+.syllabus-form input[type="file"] {
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border: 2px solid #444;
+  border-radius: 4px;
+  background: #fff;
+}
+
+/* Show selected filename in a nice pill */
+.syllabus-form .file-name {
+  padding: 0.5rem 0.75rem;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-weight: 500;
+  color: #333;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The green “Upload” button */
+.syllabus-form .submit-btn {
+  background-color: #57a773;
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.syllabus-form .submit-btn:hover {
+  background-color: #46935f;
+}
+
+/* Download link below */
+.download-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  text-decoration: none;
+  color: #2a4db7;
+}
+.download-link:hover {
+  text-decoration: underline;
+}
+
+/* Contextual card on the right */
+.instructor-card img[alt="Syllabus Info"] {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 0.5rem;
+}
+.instructor-card h3 {
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+}
+.instructor-card p {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Mobile responsiveness (optional) */
+@media (max-width: 600px) {
+  .syllabus-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .syllabus-form .submit-btn {
+    width: 100%;
+    text-align: center;
+  }
+}

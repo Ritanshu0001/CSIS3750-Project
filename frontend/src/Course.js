@@ -5,20 +5,25 @@ import './Course.css'; // Ensure styles for .assignment-form are present if need
 export default function Course() {
   const { username, courseName } = useParams();
   const navigate = useNavigate();
+
   const [activeTab, setActiveTab] = useState('Home');
   const [assignments, setAssignments] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
   const [students, setStudents] = useState([]);
   const [newAnnouncement, setNewAnnouncement] = useState('');
   const [newTitle, setNewTitle] = useState('');
+  // ─────────────────────────────────────────────────────────────────────────────
+  // new state for syllabus upload:
+  const [syllabusFile, setSyllabusFile] = useState(null);
+  const [syllabusName, setSyllabusName] = useState('');
+  // ─────────────────────────────────────────────────────────────────────────────
 
-  // Updated state to include dueTime for the new assignment form
   const [newAssignment, setNewAssignment] = useState({
     name: '',
     description: '',
     totalMarks: '',
     dueDate: '',
-    dueTime: '', // Added dueTime field
+    dueTime: '',
   });
 
   const email = localStorage.getItem('email');
@@ -26,7 +31,7 @@ export default function Course() {
 
   // ─── CLEAR OUT STALE DATA WHEN SWITCHING TABS ─────────────────────────────────
   useEffect(() => {
-    if (activeTab !== 'Assignments' && activeTab !== 'Grades') {
+    if (!['Assignments', 'Grades'].includes(activeTab)) {
       setAssignments([]);
     }
     if (activeTab !== 'Announcements') {
@@ -37,24 +42,23 @@ export default function Course() {
     }
   }, [activeTab]);
 
-  // ─── Fetch assignments when Assignments or Grades tab is active ───────────────
+  // ─── FETCH ASSIGNMENTS (for the Assignments & Grades tabs ONLY) ────────────
   useEffect(() => {
-    if (activeTab === 'Assignments' || activeTab === 'Grades') {
+    if (['Assignments', 'Grades'].includes(activeTab)) {
       fetch(
         `http://localhost:5000/test/assignments/${username}/${encodeURIComponent(
           courseName
         )}`
       )
-        .then(res => res.json())
-        .then(data => setAssignments(Array.isArray(data) ? data : []))
-        .catch(err => console.error('Error fetching assignments:', err));
+        .then((res) => res.json())
+        .then((data) => setAssignments(Array.isArray(data) ? data : []))
+        .catch((err) => console.error('Error fetching assignments:', err));
     }
   }, [activeTab, username, courseName]);
 
-  // ─── Fetch announcements when Announcements tab is active ───────────────────
+  // ─── FETCH ANNOUNCEMENTS (for the Announcements tab ONLY) ─────────────────
   useEffect(() => {
     if (activeTab === 'Announcements') {
-      // reuse top‐level isTeacher
       const url = isTeacher
         ? `http://localhost:5000/test/announcements/course/${encodeURIComponent(
             courseName
@@ -64,13 +68,13 @@ export default function Course() {
           )}`;
 
       fetch(url)
-        .then(res => res.json())
-        .then(data => setAnnouncements(Array.isArray(data) ? data : []))
-        .catch(err => console.error('Error fetching announcements:', err));
+        .then((res) => res.json())
+        .then((data) => setAnnouncements(Array.isArray(data) ? data : []))
+        .catch((err) => console.error('Error fetching announcements:', err));
     }
-  }, [activeTab, courseName, username, isTeacher]);
+  }, [activeTab, username, courseName, isTeacher]);
 
-  // ─── Fetch students when Students tab is active (for teachers) ───────────────
+  // ─── FETCH STUDENTS (for the Students tab ONLY) ───────────────────────────
   useEffect(() => {
     if (isTeacher && activeTab === 'Students') {
       fetch(
@@ -78,14 +82,14 @@ export default function Course() {
           courseName
         )}/${username}`
       )
-        .then(res => res.json())
-        .then(data => setStudents(Array.isArray(data) ? data : []))
-        .catch(err => console.error('Error fetching students:', err));
+        .then((res) => res.json())
+        .then((data) => setStudents(Array.isArray(data) ? data : []))
+        .catch((err) => console.error('Error fetching students:', err));
     }
-  }, [activeTab, isTeacher, courseName, username]);
+  }, [activeTab, isTeacher, username, courseName]);
 
   // ─── Handle submitting a new announcement ────────────────────────────────────
-  const handleAnnouncementSubmit = async e => {
+  const handleAnnouncementSubmit = async (e) => {
     e.preventDefault();
     const payload = {
       username,
@@ -100,12 +104,12 @@ export default function Course() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-
       const result = await res.json();
+
       if (res.ok) {
         setNewTitle('');
         setNewAnnouncement('');
-        setAnnouncements(prev => [
+        setAnnouncements((prev) => [
           ...prev,
           { ...payload, createdAt: new Date().toISOString() },
         ]);
@@ -117,12 +121,12 @@ export default function Course() {
     }
   };
 
-  // ─── Navigate to view a specific student's profile ────────────────────────────
-  const handleViewStudent = studentUsername => {
+  // ─── Navigate to a student's profile ────────────────────────────────────────
+  const handleViewStudent = (studentUsername) => {
     navigate(`/course/${courseName}/students/${studentUsername}`);
   };
 
-  // ─── Reset and switch to Add Assignment tab ──────────────────────────────────
+  // ─── Reset & switch to Add Assignment tab ───────────────────────────────────
   const goToAddAssignmentTab = () => {
     setNewAssignment({
       name: '',
@@ -134,25 +138,60 @@ export default function Course() {
     setActiveTab('AddAssignment');
   };
 
-  // ─── Generic handler for controlled form inputs ──────────────────────────────
-  const handleAssignmentChange = e => {
+  // ─── Generic handler for controlled form inputs ─────────────────────────────
+  const handleAssignmentChange = (e) => {
     const { name, value } = e.target;
-    setNewAssignment(prev => ({ ...prev, [name]: value }));
+    setNewAssignment((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // ─── SYLLABUS CHANGE & UPLOAD HANDLERS ─────────────────────────────────────
+  const handleSyllabusChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSyllabusFile(file);
+      setSyllabusName(file.name);
+    }
+  };
+
+  const handleSyllabusUpload = async (e) => {
+    e.preventDefault();
+    if (!syllabusFile) {
+      return alert('Please choose a file first.');
+    }
+
+    const formData = new FormData();
+    formData.append('courseName', courseName)
+    formData.append('file', syllabusFile);
+
+    try {
+      const res = await fetch('http://localhost:5000/syllabus/upload', {
+          method: 'POST',
+          body: formData,
+       });
+
+      if (res.ok) {
+        alert('✅ Syllabus uploaded successfully!');
+        setSyllabusFile(null);
+        setSyllabusName('');
+      } else {
+        const err = await res.json();
+        alert('⚠️ Upload failed: ' + (err.error || res.statusText));
+      }
+    } catch (e) {
+      alert('❌ Error uploading: ' + e.message);
+    }
   };
 
   // ─── Render content based on the active tab ─────────────────────────────────
   const renderContent = () => {
     switch (activeTab) {
+      // ──────────────────────────────────────────────────────────────────────────
       case 'Home':
         return (
           <>
             <h2>Welcome to {courseName}</h2>
-            {/* ... Home content ... */}
             <ul>
-              <li>
-                My name is [Instructor Name] and I will be your instructor for this
-                course.
-              </li>
+              <li>My name is [Instructor Name] and I will be your instructor.</li>
               <li>
                 <strong>Course Description</strong>
                 <br />
@@ -170,6 +209,7 @@ export default function Course() {
           </>
         );
 
+      // ──────────────────────────────────────────────────────────────────────────
       case 'Assignments':
         return (
           <>
@@ -222,9 +262,11 @@ export default function Course() {
                           : 'Date not available'}
                       </span>
                       <img
-                        style={{ width: '20px', height: '20px', marginLeft: '10px' }}
-                        src={a.marksObtained !== undefined ? '/checkmark.png' : '/circle1.png'}
-                        alt={a.marksObtained !== undefined ? 'Completed' : 'Pending'}
+                        src={
+                          a.marksObtained != null ? '/checkmark.png' : '/circle1.png'
+                        }
+                        alt={a.marksObtained != null ? 'Completed' : 'Pending'}
+                        style={{ width: 20, height: 20, marginLeft: 8 }}
                       />
                     </div>
                   </div>
@@ -234,55 +276,49 @@ export default function Course() {
           </>
         );
 
+      // ──────────────────────────────────────────────────────────────────────────
       case 'AddAssignment':
         return (
           <div className="assignment-form">
             <h2>Create New Assignment</h2>
             <form
-              onSubmit={async e => {
+              onSubmit={async (e) => {
                 e.preventDefault();
-                const { dueDate, dueTime, name, description, totalMarks } = newAssignment;
-
+                const { dueDate, dueTime, name, description, totalMarks } =
+                  newAssignment;
                 if (!dueDate || !dueTime) {
                   alert('Please select both a due date and a due time.');
                   return;
                 }
-
-                const combinedDateTime = new Date(`${dueDate}T${dueTime}`);
-                if (isNaN(combinedDateTime.getTime())) {
-                  alert('Invalid date or time selected. Please check your inputs.');
+                const dt = new Date(`${dueDate}T${dueTime}`);
+                if (isNaN(dt.getTime())) {
+                  alert('Invalid date/time selected.');
                   return;
                 }
-
-                const isoDueDate = combinedDateTime.toISOString();
                 const payload = {
                   name,
                   description,
                   totalMarks: Number(totalMarks),
-                  dueDate: isoDueDate,
+                  dueDate: dt.toISOString(),
                   username,
                   courseName,
                 };
-
                 try {
-                  const res = await fetch('http://localhost:5000/test/assignments', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                  });
-
+                  const res = await fetch(
+                    'http://localhost:5000/test/assignments',
+                    {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(payload),
+                    }
+                  );
                   const result = await res.json();
                   if (res.ok) {
-                    alert('Assignment created successfully!');
                     setActiveTab('Assignments');
-                    if (result.insertedIds && Array.isArray(result.insertedIds)) {
-                      setAssignments(prev => [
-                        ...prev,
-                        ...result.insertedIds.map(id => ({ _id: id, ...payload })),
-                      ]);
-                    } else {
-                      setAssignments(prev => [...prev, { _id: Date.now(), ...payload }]);
-                    }
+                    setAssignments((prev) => [
+                      ...prev,
+                      { _id: result.insertedIds?.[0] || Date.now(), ...payload },
+                    ]);
                   } else {
                     alert(result.error || 'Failed to create assignment.');
                   }
@@ -321,11 +357,10 @@ export default function Course() {
                 min="0"
               />
 
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: 10 }}>
                 <div style={{ flex: 1 }}>
-                  <label htmlFor="dueDate">Due Date:</label>
+                  <label>Due Date:</label>
                   <input
-                    id="dueDate"
                     name="dueDate"
                     type="date"
                     value={newAssignment.dueDate}
@@ -335,9 +370,8 @@ export default function Course() {
                   />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label htmlFor="dueTime">Due Time:</label>
+                  <label>Due Time:</label>
                   <input
-                    id="dueTime"
                     name="dueTime"
                     type="time"
                     value={newAssignment.dueTime}
@@ -349,12 +383,11 @@ export default function Course() {
               </div>
 
               <div
-                className="form-actions"
                 style={{
                   display: 'flex',
                   justifyContent: 'flex-end',
-                  gap: '10px',
-                  marginTop: '20px',
+                  gap: 10,
+                  marginTop: 20,
                 }}
               >
                 <button type="submit" className="submit-btn">
@@ -372,35 +405,37 @@ export default function Course() {
           </div>
         );
 
+      // ──────────────────────────────────────────────────────────────────────────
       case 'Announcements':
         return (
           <>
             <div className="announcement-form-box">
               <h2>Announcements for {courseName}</h2>
-
               {isTeacher && (
-                <form onSubmit={handleAnnouncementSubmit} className="announcement-form">
+                <form
+                  onSubmit={handleAnnouncementSubmit}
+                  className="announcement-form"
+                >
                   <input
                     type="text"
                     placeholder="Title"
                     value={newTitle}
-                    onChange={e => setNewTitle(e.target.value)}
+                    onChange={(e) => setNewTitle(e.target.value)}
                     required
                   />
                   <textarea
                     placeholder="Write your announcement..."
                     value={newAnnouncement}
-                    onChange={e => setNewAnnouncement(e.target.value)}
+                    onChange={(e) => setNewAnnouncement(e.target.value)}
                     required
                   />
                   <button type="submit">Post Announcement</button>
                 </form>
               )}
             </div>
-
             <div className="announcement-posts">
               {announcements.length === 0 ? (
-                <p style={{ marginTop: '20px', color: '#333' }}>No announcements posted yet.</p>
+                <p style={{ marginTop: 20, color: '#333' }}>No announcements posted yet.</p>
               ) : (
                 [...announcements]
                   .reverse()
@@ -409,9 +444,7 @@ export default function Course() {
                       <strong>{a.title || 'Announcement'}</strong>
                       <p>{a.message}</p>
                       <small>
-                        {a.createdAt && !isNaN(Date.parse(a.createdAt))
-                          ? new Date(a.createdAt).toLocaleString()
-                          : 'Date not available'}
+                        {a.createdAt ? new Date(a.createdAt).toLocaleString() : '—'}
                       </small>
                     </div>
                   ))
@@ -420,71 +453,61 @@ export default function Course() {
           </>
         );
 
+      // ──────────────────────────────────────────────────────────────────────────
       case 'Grades':
-        const totalScored = assignments.reduce((acc, a) => acc + (a.marksObtained || 0), 0);
-        const totalMarks = assignments.reduce((acc, a) => acc + (a.totalMarks || 0), 0);
-        const percentage = totalMarks ? ((totalScored / totalMarks) * 100).toFixed(1) : '0.0';
+        const totalScored = assignments.reduce((sum, a) => sum + (a.marksObtained || 0), 0);
+        const totalPossible = assignments.reduce((sum, a) => sum + (a.totalMarks || 0), 0);
+        const percent = totalPossible ? ((totalScored / totalPossible) * 100).toFixed(1) : '0.0';
 
         return (
           <>
             <h2>Grades for {courseName}</h2>
-            <div style={{ display: 'flex', gap: '40px' }}>
-              <div className="announcement-wrapper" style={{ flex: 1 }}>
-                {assignments.length === 0 ? (
-                  <p>No grades available yet.</p>
-                ) : (
-                  assignments.map((a, i) => (
-                    <div className="assignment-item-row" key={a._id || i}>
-                      <div className="assignment-left">{a.name}</div>
-                      <div className="assignment-right">
-                        <span>
-                          {a.marksObtained !== undefined
-                            ? `${a.marksObtained} / ${a.totalMarks}`
-                            : 'Not Graded'}
-                        </span>
-                      </div>
+            <div className="announcement-wrapper">
+              {assignments.length === 0 ? (
+                <p>No grades available yet.</p>
+              ) : (
+                assignments.map((a, i) => (
+                  <div
+                    key={a._id || i}
+                    className="announcement-item assignment-item-row"
+                  >
+                    <div className="assignment-left">
+                      <strong>{a.name}</strong>
                     </div>
-                  ))
-                )}
-              </div>
-              <div className="instructor-card">
-                <img src="/score.png" alt="Grades" />
-                <h3>Your Overall Grade:</h3>
-                <div
-                  style={{
-                    marginTop: '10px',
-                    backgroundColor: 'white',
-                    borderRadius: '20px',
-                    padding: '12px 24px',
-                    fontSize: '24px',
-                    fontWeight: 'bold',
-                    color: 'green',
-                    display: 'inline-block',
-                  }}
-                >
-                  {percentage}%
-                </div>
-              </div>
+                    <div className="assignment-right">
+                      <span>
+                        {a.marksObtained != null ? a.marksObtained : '–'} /{' '}
+                        {a.totalMarks != null ? a.totalMarks : '–'}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </>
         );
 
+      // ──────────────────────────────────────────────────────────────────────────
       case 'Students':
         return (
           <>
             <h2>Students in {courseName}</h2>
+
             <div className="announcement-wrapper">
               {students.length === 0 ? (
                 <p>No students found for this course.</p>
               ) : (
                 students.map((s, i) => (
-                  <div className="assignment-item-row" key={s.username || i}>
+                  <div
+                    key={s.username || i}
+                    className="announcement-item assignment-item-row"
+                  >
                     <div className="assignment-left">
-                      {s.firstName} {s.lastName}
+                      <span>{s.firstName} {s.lastName}</span>
                     </div>
                     <div className="assignment-right">
                       <button
-                        className="view-button"
+                        className="view-profile-button"
                         onClick={() => handleViewStudent(s.username)}
                       >
                         View Profile
@@ -497,26 +520,41 @@ export default function Course() {
           </>
         );
 
+      // ──────────────────────────────────────────────────────────────────────────
       case 'Syllabus':
         return (
           <>
             <h2>Course Syllabus</h2>
+
+            {isTeacher && (
+              <form
+                className="syllabus-form"
+                onSubmit={handleSyllabusUpload}   // ← this must be present
+              >
+                <input
+                  type="file"
+                  onChange={handleSyllabusChange}  // ← and this too
+                />
+                <button type="submit" className="submit-btn">
+                  Upload Syllabus
+                </button>
+              </form>
+            )}
+
             <a
-              href="/dummy.pdf"
+              href={`http://localhost:5000/syllabus/download/${encodeURIComponent(
+                courseName
+              )}`}
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                fontWeight: 'bold',
-                fontSize: '18px',
-                color: '#0056b3',
-                textDecoration: 'underline',
-              }}
+              className="download-link"
             >
-              View Syllabus PDF
+              📄 Download Syllabus
             </a>
           </>
         );
 
+      // ──────────────────────────────────────────────────────────────────────────
       default:
         return <h2>Welcome to {courseName}</h2>;
     }
@@ -532,28 +570,22 @@ export default function Course() {
 
   return (
     <div className="course-page">
-      <div className="sidebar">
-        {/* ... Sidebar ... */}
+      <nav className="sidebar">
         <ul>
-          {tabs.map(tab => (
+          {tabs.map((t) => (
             <li
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={
-                activeTab === tab ||
-                (activeTab === 'AddAssignment' && tab === 'Assignments')
-                  ? 'active'
-                  : ''
-              }
+              key={t}
+              className={activeTab === t ? 'active' : ''}
+              onClick={() => setActiveTab(t)}
             >
-              {tab}
+              {t}
             </li>
           ))}
         </ul>
-        <img src="/books.png" alt="Books" />
-      </div>
+        <img src="/books.png" alt="Books" className="sidebar-image" />
+      </nav>
 
-      <div className="course-content">{renderContent()}</div>
+      <main className="course-content">{renderContent()}</main>
 
       {/* Contextual Cards */}
       {activeTab === 'Home' && (
@@ -568,7 +600,8 @@ export default function Course() {
             <br />
             Canvas Help:
             <br />• 1-844-865-2568
-            <br />• Chat, Help Guides, Support Portal
+            <br />
+            • Chat, Help Guides, Support Portal
           </p>
         </div>
       )}
@@ -598,19 +631,21 @@ export default function Course() {
           </p>
         </div>
       )}
-      {activeTab === 'Grades' && !isTeacher && (
-        <div className="instructor-card">
-          <img src="/grade_info.png" alt="Grades Info" />
-          <h3>Grade Information</h3>
-          <p>
-            • Grades are updated periodically.
-            <br />
-            • Contact the instructor for discrepancies.
-            <br />
-            • Check overall percentage regularly.
-          </p>
-        </div>
-      )}
+      {activeTab === 'Grades' && !isTeacher && (() => {
+        const totalScored = assignments.reduce((sum, a) => sum + (a.marksObtained||0), 0);
+        const totalPossible = assignments.reduce((sum, a) => sum + (a.totalMarks||0), 0);
+        const percent = totalPossible
+          ? ((totalScored/totalPossible)*100).toFixed(1)
+          : '0.0';
+
+        return (
+          <div className="instructor-card grades-summary">
+            <img src="/score.png" alt="Grades" />
+            <h3>Your Overall Grade:</h3>
+            <div className="grade-percentage-box">{percent}%</div>
+          </div>
+        );
+      })()}
       {activeTab === 'Students' && isTeacher && (
         <div className="instructor-card">
           <img src="/students_icon.png" alt="Student Roster" />

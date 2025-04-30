@@ -1,4 +1,7 @@
 import pymongo
+import io
+import base64
+from flask import Flask, request, jsonify, send_file
 from flask import Response
 from bson.json_util import dumps
 from flask import Flask, request, jsonify
@@ -6,6 +9,8 @@ from datetime import datetime, timedelta
 from bson.objectid import ObjectId
 from base64 import b64encode
 from flask_cors import CORS
+import gridfs
+from flask import send_file
 app = Flask(__name__)
 CORS(app)  # Allow all cross-origin requests (for dev only)
 
@@ -24,6 +29,7 @@ def after_request(response):
 client = pymongo.MongoClient(
     "mongodb+srv://nweikl:qyQrov-gyxsi1-dejtov@csis3750.auwttdg.mongodb.net/csis3750_db?retryWrites=true&w=majority&appName=csis3750")
 db = client["test"]
+
 
 try:
     client.admin.command('ping')
@@ -439,7 +445,52 @@ def get_announcements_by_course(courseName):
         return jsonify([serialize_doc(a) for a in announcements]), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+@app.route('/syllabus/upload', methods=['POST'])
+def upload_syllabus():
+    # Expecting multipart/form-data with both fields
+    courseName = request.form.get('courseName')
+    file       = request.files.get('file')
+    if not courseName or not file:
+        return jsonify({"error": "Missing courseName or file"}), 400
+
+    # Read & base64-encode
+    data = file.read()
+    b64  = b64encode(data).decode('utf-8')
+    dataUri = f"data:{file.mimetype};base64,{b64}"
+
+    # Upsert single document per courseName
+    db.syllabus.update_one(
+        {"courseName": courseName},
+        {"$set": {
+            "syllabusDataUri": dataUri,
+            "filename":        file.filename,
+            "updatedAt":       datetime.utcnow()
+        }},
+        upsert=True
+    )
+
+    return jsonify({
+        "message":    "Syllabus uploaded",
+        "courseName": courseName
+    }), 201
 
 
+# ─── DOWNLOAD ───────────────────────────────────────────────────────────────
+@app.route('/syllabus/download/<string:courseName>', methods=['GET'])
+def download_syllabus(courseName):
+    doc = db.syllabus.find_one({"courseName": courseName})
+    if not doc:
+        return jsonify({"error": "Syllabus not found"}), 404
+
+    # split off the data URI header
+    header, b64data = doc["syllabusDataUri"].split(",", 1)
+    raw = base64.b64decode(b64data)
+
+    return send_file(
+        io.BytesIO(raw),
+        mimetype=doc.get("contentType", "application/pdf"),
+        as_attachment=True,
+        download_name=doc.get("filename", f"{courseName}.pdf")
+    )
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
