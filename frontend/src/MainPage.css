@@ -1,0 +1,163 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body, html {
+  height: 100%;
+  background-color: #fabe2c;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.main-page {
+  min-height: 100vh;
+  background-color: #fabe2c;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 60px;
+  background-color: #fabe2c;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.logo {
+  font-weight: bold;
+  font-size: 20px;
+}
+
+.nav-links {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
+.nav-link {
+  color: black;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.nav-link.active {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.account-button {
+  padding: 8px 16px;
+  border: 1px solid black;
+  background-color: transparent;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Page Layout */
+.page-container {
+  padding-left: 220px;
+  padding-right: 220px;
+  width: 100%;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 40px 0 20px;
+}
+
+.nsu-logo {
+  width: 120px;
+  height: auto;
+}
+
+.welcome-text {
+  font-size: 24px;
+  font-weight: bold;
+  color: #000;
+}
+
+/* Courses Grid */
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+.course-card {
+  background: white;
+  padding: 16px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  position: relative;
+}
+
+.course-card h3 {
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.course-card ul {
+  margin-bottom: 10px;
+  padding-left: 20px;
+}
+
+.course-card li {
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.course-image {
+  width: 100px;
+  margin: 10px auto;
+  display: block;
+}
+
+.progress {
+  position: absolute;
+  bottom: 15px;
+  right: 20px;
+  font-size: 16px;
+  background-color: #ffe102;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: bold;
+}
+
+.footer {
+  text-align: center;
+  padding: 16px 0;
+  font-weight: bold;
+  font-size: 14px;
+  font-size: 20px;
+  margin-top: 100px;
+  background-color: #fabe2c;
+}
+
+.course-card {
+  position: relative;
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.progress {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: #ffd700;
+  color: #000;
+  font-weight: bold;
+  padding: 10px 20px;
+  border-radius: 30px;
+  font-size: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
