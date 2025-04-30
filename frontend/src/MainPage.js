@@ -12,7 +12,7 @@ function MainPage() {
     if (!username) return;
 
     // Fetch all courses for the user
-    fetch(`http://localhost:5000/test/courses/${username}`)
+    fetch(`/test/courses/${username}`)
       .then((res) => res.json())
       .then(async (data) => {
         if (!Array.isArray(data)) {
@@ -24,7 +24,7 @@ function MainPage() {
         const updatedCourses = await Promise.all(
           data.map(async (course) => {
             try {
-              const res = await fetch(`http://localhost:5000/test/assignments/${username}/${encodeURIComponent(course.courseName)}`);
+              const res = await fetch(`/test/assignments/${username}/${encodeURIComponent(course.courseName)}`);
               const assignments = await res.json();
 
               const totalScored = assignments.reduce((sum, a) => sum + (a.marksObtained || 0), 0);
@@ -69,7 +69,7 @@ function MainPage() {
                 </ul>
                 <img src="/class_img.png" alt="Course" className="course-image" />
                 
-                {username !== 'teacher' && course.percentage && (
+                {username !== ('teacher'||'t0') && course.percentage && (
                   <div className="progress">{course.percentage}%</div>
                 )}
               </div>

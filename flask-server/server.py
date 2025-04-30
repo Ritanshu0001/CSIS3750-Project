@@ -4,6 +4,10 @@ from bson.json_util import dumps
 from flask import Flask, request, jsonify
 from datetime import datetime, timedelta
 from bson.objectid import ObjectId
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 
 app = Flask(__name__)
@@ -17,8 +21,7 @@ def after_request(response):
     return response
 
 
-client = pymongo.MongoClient(
-    "mongodb+srv://nweikl:qyQrov-gyxsi1-dejtov@csis3750.auwttdg.mongodb.net/csis3750_db?retryWrites=true&w=majority&appName=csis3750")
+client = pymongo.MongoClient(os.getenv("MONGO_URI"))
 db = client["test"]
 
 try:

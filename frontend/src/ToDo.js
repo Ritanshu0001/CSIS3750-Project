@@ -9,7 +9,7 @@ export default function ToDo() {
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/test/student/${username}/todo`);
+        const res = await fetch(`/test/student/${username}/todo`);
         const data = await res.json();
 
         if (!res.ok) {

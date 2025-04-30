@@ -16,6 +16,29 @@ import Course from './Course';
 import StudentProfile from './StudentProfile';
 import ToDo from "./ToDo";
 
+function LandingPage() {
+  return (
+    <>
+      <div className="hero">
+        <div className="hero-left">
+          <img src="/homepage_img.png" alt="BrightBoard" />
+        </div>
+        <div className="hero-right">
+          <h1>Welcome to <br /> <strong>BrightBoard.</strong></h1>
+          <p>BrightBoard is an enhanced version of Canvas with improved features and better collaboration tools.</p>
+          <Link to="/signin">
+            <button className="signin-filled">Sign in ➤</button>
+          </Link>
+        </div>
+      </div>
+      <div className="quote">
+        “BrightBoard makes class organization 10x easier.” – Jane, CSIS 7777
+      </div>
+    </>
+  );
+}
+
+
 function Navbar({ isLoggedIn, setIsLoggedIn }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -49,7 +72,7 @@ function Navbar({ isLoggedIn, setIsLoggedIn }) {
         {!shouldHideLinks && (
           <>
             <li><Link to="/main">Home</Link></li>
-            {localStorage.getItem('username') !== 'teacher' && (
+            {localStorage.getItem('username') !== ('teacher'||'t0') && (
               <li><Link to="/todo">To-Do</Link></li>
             )}
             <li><Link to="/account">Account</Link></li>
@@ -90,7 +113,7 @@ function App() {
     <Router>
       <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
       <Routes>
-        <Route path="/" element={<SignIn setIsLoggedIn={setIsLoggedIn} />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/signin" element={<SignIn setIsLoggedIn={setIsLoggedIn} />} />
         <Route path="/verify" element={<Verification />} />
         <Route path="/main" element={<MainPage />} />

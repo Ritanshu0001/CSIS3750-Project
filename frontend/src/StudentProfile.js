@@ -9,7 +9,7 @@ export default function StudentProfile() {
   const [marks, setMarks] = useState({});
 
   useEffect(() => {
-    fetch(`http://localhost:5000/test/student-assignments/${studentUsername}/${courseName}`)
+    fetch(`/test/student-assignments/${studentUsername}/${courseName}`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -33,7 +33,7 @@ export default function StudentProfile() {
   const handleUpdateMarks = async (assignmentName) => {
     const newMarks = marks[assignmentName];
     try {
-      const res = await fetch('http://localhost:5000/test/assignments', {
+      const res = await fetch('/test/assignments', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

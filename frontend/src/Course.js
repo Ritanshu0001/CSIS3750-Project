@@ -17,7 +17,7 @@ export default function Course() {
 
   useEffect(() => {
     if (activeTab === 'Assignments' || activeTab === 'Grades') {
-      fetch(`http://localhost:5000/test/assignments/${username}/${encodeURIComponent(courseName)}`)
+      fetch(`/test/assignments/${username}/${encodeURIComponent(courseName)}`)
         .then(res => res.json())
         .then(data => setAssignments(Array.isArray(data) ? data : []))
         .catch(err => console.error("Error fetching assignments:", err));
@@ -26,7 +26,7 @@ export default function Course() {
 
   useEffect(() => {
     if (activeTab === 'Announcements') {
-      fetch(`http://localhost:5000/test/announcements/${username}/${encodeURIComponent(courseName)}`)
+      fetch(`/test/announcements/${username}/${encodeURIComponent(courseName)}`)
         .then(res => res.json())
         .then(data => setAnnouncements(Array.isArray(data) ? data : []))
         .catch(err => console.error("Error fetching announcements:", err));
@@ -35,7 +35,7 @@ export default function Course() {
 
   useEffect(() => {
     if (isTeacher && activeTab === 'Students') {
-      fetch(`http://localhost:5000/test/teacherclasses/${encodeURIComponent(courseName)}/${username}`)
+      fetch(`/test/teacherclasses/${encodeURIComponent(courseName)}/${username}`)
         .then(res => res.json())
         .then(data => setStudents(Array.isArray(data) ? data : []))
         .catch(err => console.error("Error fetching students:", err));
@@ -51,7 +51,7 @@ export default function Course() {
       title: newTitle
     };
 
-    const res = await fetch('http://localhost:5000/test/announcements', {
+    const res = await fetch('/test/announcements', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -282,35 +282,35 @@ export default function Course() {
       {activeTab === 'Home' && (
         <div className="instructor-card">
           <img src="/professor.png" alt="Instructor" />
-          <h3>Professor Muhammad</h3>
-          <p>Canvas Inbox: Response time within 24–48 hours M–F.<br />
-            Office Hours: By appointment<br /><br />
-            Canvas Help:<br />
-            • 1-844-865-2568<br />
-            • Chat, Help Guides, Support Portal
-          </p>
+          <h3>Professor</h3>
+          {/*<p>Canvas Inbox: Response time within 24–48 hours M–F.<br />*/}
+          {/*  Office Hours: By appointment<br /><br />*/}
+          {/*  Canvas Help:<br />*/}
+          {/*  • 1-844-865-2568<br />*/}
+          {/*  • Chat, Help Guides, Support Portal*/}
+          {/*</p>*/}
         </div>
       )}
 
       {activeTab === 'Assignments' && (
         <div className="instructor-card">
           <img src="/assignment.png" alt="Assignments" />
-          <h3>Assignment Info</h3>
-          <p>• Submit through Canvas<br />
-            • Allowed formats: .docx, .pdf<br />
-            • Late work may not be accepted
-          </p>
+          {/*<h3>Assignment Info</h3>*/}
+          {/*<p>• Submit through Canvas<br />*/}
+          {/*  • Allowed formats: .docx, .pdf<br />*/}
+          {/*  • Late work may not be accepted*/}
+          {/*</p>*/}
         </div>
       )}
 
       {activeTab === 'Announcements' && (
         <div className="instructor-card">
           <img src="/professor.png" alt="Announcements" />
-          <h3>Professor Muhammad</h3>
-          <p>• Check announcements weekly<br />
-            • Refresh for updates<br />
-            • Email for urgent info
-          </p>
+          <h3>Professor</h3>
+          {/*<p>• Check announcements weekly<br />*/}
+          {/*  • Refresh for updates<br />*/}
+          {/*  • Email for urgent info*/}
+          {/*</p>*/}
         </div>
       )}
     </div>
