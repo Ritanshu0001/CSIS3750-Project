@@ -1,15 +1,15 @@
 require('dotenv').config();
 const bcrypt = require('bcrypt');
-const db = require('./database'); // MongoDB connection
+const db = require('./database'); 
 
-const User = require('../Documents/CSIS3750/CSIS3750-Project-master 3/models/User');
-const TeacherClass = require('../Documents/CSIS3750/CSIS3750-Project-master 3/models/teacher'); // TeacherClass model
+const User = require('./models/User');
+const TeacherClass = require('./models/teacher'); 
 
 async function insertData() {
   try {
-    console.log("🔍 Checking user...");
+    console.log("Checking user...");
 
-    // 1. Insert teacher into users collection if not already there
+    
     const existingUser = await User.findOne({ username: "teacher" });
     if (!existingUser) {
       const hashedPassword = await bcrypt.hash("123", 10);
@@ -24,12 +24,12 @@ async function insertData() {
         displayName: "Joff",
         profilePicture: "https://example.com/myProfilePicture.jpg"
       });
-      console.log("✅ User Created:", newUser.username);
+      console.log(" User Created:", newUser.username);
     } else {
-      console.log("⚠️ User already exists:", existingUser.username);
+      console.log("User already exists:", existingUser.username);
     }
 
-    // 2. Insert teacher's course/student structure into teacherClasses if not exists
+    
     console.log("🔍 Checking teacherClasses...");
     const existingClass = await TeacherClass.findOne({ teacherUsername: "teacher" });
     if (!existingClass) {
@@ -47,16 +47,16 @@ async function insertData() {
           }
         ]
       });
-      console.log("✅ TeacherClass Created:", newClass.teacherUsername);
+      console.log("TeacherClass Created:", newClass.teacherUsername);
     } else {
-      console.log("⚠️ TeacherClass already exists for:", existingClass.teacherUsername);
+      console.log("TeacherClass already exists for:", existingClass.teacherUsername);
     }
 
   } catch (err) {
-    console.error("❌ Error inserting data:", err);
+    console.error("Error inserting data:", err);
   } finally {
     db.close();
-    console.log("🛑 MongoDB disconnected");
+    console.log("MongoDB disconnected");
   }
 }
 

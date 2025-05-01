@@ -10,10 +10,10 @@ const courseSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Module'
     }],
-    // Adding the username field to associate a course with a user
+    
     username: {
         type: String,
-        required: true  // Set to true if every course must be associated with a user
+        required: true  
     }
 });
 

@@ -9,7 +9,7 @@ export default function StudentProfile() {
   const [marks, setMarks] = useState({});
 
   useEffect(() => {
-    fetch(`/test/student-assignments/${studentUsername}/${courseName}`)
+    fetch(`http://localhost:5000/test/assignments/${studentUsername}/${courseName}`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {
@@ -33,7 +33,7 @@ export default function StudentProfile() {
   const handleUpdateMarks = async (assignmentName) => {
     const newMarks = marks[assignmentName];
     try {
-      const res = await fetch('/test/assignments', {
+      const res = await fetch('http://localhost:5000/test/assignments', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -73,7 +73,7 @@ export default function StudentProfile() {
           {assignments.map((a) => (
             <div className="assignment-box" key={a._id}>
               <div className="assignment-info">
-                <strong>{a.name}</strong> - {a.description}
+                <strong>{a.name}</strong>
                 <div className="assignment-marks">
                   (Marks: {a.totalMarks}, Obtained:{' '}
                   {a.marksObtained !== undefined && a.marksObtained !== null
@@ -98,8 +98,3 @@ export default function StudentProfile() {
     </div>
   );
 }
-
-
-
-
-

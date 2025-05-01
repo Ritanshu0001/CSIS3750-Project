@@ -10,7 +10,7 @@ function AccountPage() {
     const username = localStorage.getItem('username');
     if (!username) return;
 
-    fetch(`/test/users/${username}`)
+    fetch(`http://localhost:5000/test/users/${username}`)
       .then((res) => res.json())
       .then((data) => {
         if (data && !data.error) {

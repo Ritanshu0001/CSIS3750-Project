@@ -1,3 +1,4 @@
+/* Reset & Base */
 * {
   margin: 0;
   padding: 0;
@@ -173,44 +174,102 @@ html, body {
 }
 
 /* Announcement Form */
-.announcement-form {
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
+.announcement-section {
+  background: white;
+  padding: 30px;
+  margin: 30px auto;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  max-width: 700px;
 }
 
-.announcement-form input,
+.announcement-section h2 {
+  font-size: 28px;
+  margin-bottom: 20px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.announcement-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.announcement-form input[type="text"],
 .announcement-form textarea {
-  margin-bottom: 10px;
-  padding: 8px;
-  font-size: 1em;
+  padding: 14px 18px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-size: 16px;
+  font-family: 'Segoe UI', sans-serif;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.announcement-form textarea {
+  min-height: 100px;
+  resize: vertical;
 }
 
 .announcement-form button {
-  width: 150px;
-  padding: 8px;
-  font-weight: bold;
   background-color: #000;
   color: white;
+  font-weight: bold;
   border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 16px;
   cursor: pointer;
+  align-self: flex-start;
+  transition: background-color 0.2s ease;
 }
-.assignment-item-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+
+.announcement-form button:hover {
+  background-color: #333;
+}
+
+.announcement-item {
+  background: #fff;
+  padding: 20px;
+  margin-top: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.announcement-form-box {
   background: white;
-  padding: 20px 24px;
+  padding: 30px;
+  margin: 30px auto;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  max-width: 700px;
+  text-align: center;
+}
+
+.announcement-form-box h2 {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+.announcement-posts {
+  margin-top: 30px;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.announcement-item {
+  background: #fff;
+  padding: 20px;
   margin-bottom: 16px;
   border-radius: 20px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.05);
+  text-align: left;
 }
 
-.assignment-item-row:hover {
-  transform: translateY(-4px);
-}
-
+/* Buttons */
 .view-button {
   background-color: #000;
   color: white;
@@ -224,4 +283,310 @@ html, body {
 
 .view-button:hover {
   background-color: #333;
+}
+
+.add-btn {
+  background-color: #f0b429;
+  color: black;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 400px;
+  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.2);
+}
+
+.floating-add-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #0042f7;
+  color: white;
+  font-size: 32px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+  transition: background-color 0.3s ease;
+}
+
+.floating-add-button:hover {
+  background-color: #0036b3;
+}
+
+/* Assignment Form */
+.assignment-form input,
+.assignment-form textarea {
+  padding: 10px 14px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  font-family: 'Segoe UI', sans-serif;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.assignment-form textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.submit-btn {
+  background-color: #4CAF50;
+  color: white;
+  font-weight: bold;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.submit-btn:hover {
+  background-color: #388E3C;
+}
+
+.cancel-btn {
+  background-color: #ccc;
+  color: #000;
+  font-weight: bold;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background-color: #999;
+}
+
+/* Date & Time Picker Styles */
+input[type="date"],
+input[type="time"] {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 16px;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #fff;
+  color: #333;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+input[type="date"]:focus,
+input[type="time"]:focus {
+  outline: none;
+  border-color: #4A90E2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3);
+}
+
+/* Calendar/Clock icon positioning on WebKit */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  opacity: 0.6;
+}
+/* just the new bits */
+.overall-grade-pill {
+  background: white;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-size: 24px;
+  font-weight: bold;
+  color: green;
+  display: inline-block;
+  margin-top: 10px;
+}
+.date-time-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+/* A white, rounded card with a subtle shadow */
+.grade-summary-box {
+  background: #fff;                /* white background */
+  border-radius: 12px;             /* rounded corners */
+  padding: 20px;                   /* inner spacing */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* soft drop shadow */
+  text-align: center;              /* center its contents */
+  max-width: 260px;                /* optional, to limit width */
+  margin: 0 auto;                  /* center horizontally inside sidebar */
+}
+
+.grade-summary-box h3 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+}
+
+.grade-summary-box .grade-badge {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #333;
+}
+.grade-percentage-box {
+  display: inline-block;            /* shrink to fit the text */
+  background: #fff;                 /* white background */
+  border-radius: 12px;              /* rounded corners */
+  padding: 8px 16px;                /* vertical/horizontal spacing */
+  font-size: 1.8rem;                /* larger number */
+  font-weight: bold;                /* stand out */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1); /* subtle drop shadow */
+  margin-top: 8px;                  /* space from the heading */
+}
+.view-profile-button {
+  background-color: #1e73be;     /* a nice blue accent */
+  color: #fff;                   /* white text */
+  border: none;                  /* remove default border */
+  border-radius: 8px;            /* pill corners */
+  padding: 6px 14px;             /* vertical | horizontal */
+  font-size: 0.9rem;             /* match your text scale */
+  font-weight: 500;              /* a bit bolder */
+  cursor: pointer;               /* pointer on hover */
+  transition: background-color .2s ease, transform .1s ease;
+}
+
+.view-profile-button:hover {
+  background-color: #155a8a;     /* darker on hover */
+  transform: translateY(-1px);   /* subtle lift */
+}
+
+.view-profile-button:active {
+  background-color: #134f72;
+  transform: translateY(0);
+}
+/* ───────────── Course.css ───────────── */
+
+.course-content h2 {
+  margin-bottom: 1rem;
+}
+
+/* Syllabus form container */
+.syllabus-form {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* File-picker button */
+.syllabus-form input[type="file"] {
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border: 2px solid #444;
+  border-radius: 4px;
+  background: #fff;
+}
+
+/* Show selected filename in a nice pill */
+.syllabus-form .file-name {
+  padding: 0.5rem 0.75rem;
+  background: #f5f5f5;
+  border-radius: 4px;
+  font-weight: 500;
+  color: #333;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The green “Upload” button */
+.syllabus-form .submit-btn {
+  background-color: #57a773;
+  color: #fff;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.syllabus-form .submit-btn:hover {
+  background-color: #46935f;
+}
+
+/* Download link below */
+.download-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 1rem;
+  text-decoration: none;
+  color: #2a4db7;
+}
+.download-link:hover {
+  text-decoration: underline;
+}
+
+/* Contextual card on the right */
+.instructor-card img[alt="Syllabus Info"] {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 0.5rem;
+}
+.instructor-card h3 {
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+}
+.instructor-card p {
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Mobile responsiveness (optional) */
+@media (max-width: 600px) {
+  .syllabus-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .syllabus-form .submit-btn {
+    width: 100%;
+    text-align: center;
+  }
 }

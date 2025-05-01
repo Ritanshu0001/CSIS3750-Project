@@ -7,12 +7,12 @@ function MainPage() {
   const [courses, setCourses] = useState([]);
 
   const username = localStorage.getItem('username');
+  const isTeacher = String(username).includes('@nova.edu');
 
   useEffect(() => {
     if (!username) return;
 
-    // Fetch all courses for the user
-    fetch(`/test/courses/${username}`)
+    fetch(`http://localhost:5000/test/courses/${username}`)
       .then((res) => res.json())
       .then(async (data) => {
         if (!Array.isArray(data)) {
@@ -20,16 +20,19 @@ function MainPage() {
           return setCourses([]);
         }
 
-        // Fetch assignment grades for each course
         const updatedCourses = await Promise.all(
           data.map(async (course) => {
             try {
-              const res = await fetch(`/test/assignments/${username}/${encodeURIComponent(course.courseName)}`);
+              const res = await fetch(
+                `http://localhost:5000/test/assignments/${username}/${encodeURIComponent(course.courseName)}`
+              );
               const assignments = await res.json();
 
               const totalScored = assignments.reduce((sum, a) => sum + (a.marksObtained || 0), 0);
               const totalPossible = assignments.reduce((sum, a) => sum + (a.totalMarks || 0), 0);
-              const percentage = totalPossible ? ((totalScored / totalPossible) * 100).toFixed(1) : null;
+              const percentage = totalPossible
+                ? ((totalScored / totalPossible) * 100).toFixed(1)
+                : null;
 
               return { ...course, percentage };
             } catch (error) {
@@ -64,12 +67,12 @@ function MainPage() {
                 <h3>{course.courseName}</h3>
                 <ul>
                   <li>{course.description}</li>
-                  <li>Discuss both views</li>
+                  <li>Assignments</li>
                   <li>Sample answer</li>
                 </ul>
                 <img src="/class_img.png" alt="Course" className="course-image" />
-                
-                {username !== ('teacher'||'t0') && course.percentage && (
+
+                {!isTeacher && Number(course.percentage) > 0 && (
                   <div className="progress">{course.percentage}%</div>
                 )}
               </div>

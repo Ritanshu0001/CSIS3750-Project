@@ -8,6 +8,7 @@ import {
   useLocation,
   useNavigate,
 } from 'react-router-dom';
+
 import SignIn from './SignIn';
 import Verification from './Verification';
 import MainPage from './MainPage';
@@ -15,6 +16,7 @@ import AccountPage from './AccountPage';
 import Course from './Course';
 import StudentProfile from './StudentProfile';
 import ToDo from "./ToDo";
+import Assignment from "./Assignment"; // 
 
 function LandingPage() {
   return (
@@ -38,13 +40,15 @@ function LandingPage() {
   );
 }
 
-
 function Navbar({ isLoggedIn, setIsLoggedIn }) {
   const location = useLocation();
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
   const firstName = localStorage.getItem('firstName');
+  const username = localStorage.getItem('username') || '';
+  const isTeacher = ['teacher', 't0'].includes(username); 
   const hideLinks = ['/', '/signin', '/verify'];
   const shouldHideLinks = hideLinks.includes(location.pathname);
 
@@ -59,8 +63,7 @@ function Navbar({ isLoggedIn, setIsLoggedIn }) {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('firstName');
-    localStorage.removeItem('student_id');
+    localStorage.clear();
     setIsLoggedIn(false);
     navigate('/signin');
   };
@@ -72,9 +75,7 @@ function Navbar({ isLoggedIn, setIsLoggedIn }) {
         {!shouldHideLinks && (
           <>
             <li><Link to="/main">Home</Link></li>
-            {localStorage.getItem('username') !== ('teacher'||'t0') && (
-              <li><Link to="/todo">To-Do</Link></li>
-            )}
+            {!isTeacher && <li><Link to="/todo">To-Do</Link></li>}
             <li><Link to="/account">Account</Link></li>
           </>
         )}
@@ -112,6 +113,7 @@ function App() {
   return (
     <Router>
       <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
+
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/signin" element={<SignIn setIsLoggedIn={setIsLoggedIn} />} />
@@ -120,7 +122,21 @@ function App() {
         <Route path="/account" element={<AccountPage />} />
         <Route path="/course/:username/:courseName" element={<Course />} />
         <Route path="/course/:courseName/students/:studentUsername" element={<StudentProfile />} />
-        <Route path="/todo" element={<ToDo />} />
+        
+        
+        <Route path="/course/:username/:courseName/assignment/:assignmentName" element={<Assignment />} />
+
+        
+        <Route
+          path="/todo"
+          element={
+            ['teacher', 't0'].includes(localStorage.getItem('username')) ? (
+              <div style={{ padding: "2rem", fontSize: "1.2rem" }}>Access Denied</div>
+            ) : (
+              <ToDo />
+            )
+          }
+        />
       </Routes>
     </Router>
   );
