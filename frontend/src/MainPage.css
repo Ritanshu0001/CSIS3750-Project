@@ -1,4 +1,4 @@
-/* global reset */
+
 * {
   margin: 0;
   padding: 0;
@@ -11,7 +11,7 @@ html, body {
   background-color: #fabe2c;
 }
 
-/* ─── main container ────────────────────────────────────────────────────── */
+
 .main-page {
   display: flex;
   flex-direction: column;
@@ -19,19 +19,19 @@ html, body {
   background-color: #fabe2c;
 }
 
-/* ─── growable content area ─────────────────────────────────────────────── */
+
 .page-container {
-  flex: 1;               /* take all space above footer */
-  padding: 0 220px;      /* your left/right padding */
+  flex: 1;               
+  padding: 0 220px;      
   width: 100%;
 }
 
-/* ─── header: logo above title ──────────────────────────────────────────── */
+
 .header-row {
   display: flex;
-  flex-direction: column;   /* stack vertically */
-  align-items: flex-start;  /* left-align both */
-  gap: 8px;                 /* space between logo & text */
+  flex-direction: column;   
+  align-items: flex-start;  
+  gap: 8px;                 
   margin: 40px 0 20px;
 }
 
@@ -47,7 +47,7 @@ html, body {
   color: #000;
 }
 
-/* ─── courses grid ──────────────────────────────────────────────────────── */
+
 .courses-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -85,7 +85,7 @@ html, body {
   margin: 10px auto;
 }
 
-/* ─── progress badge ────────────────────────────────────────────────────── */
+
 .progress {
   position: absolute;
   bottom: 20px;
@@ -99,7 +99,7 @@ html, body {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* ─── footer ─────────────────────────────────────────────────────────────── */
+
 .footer {
   position: relative !important;
   display: block !important;

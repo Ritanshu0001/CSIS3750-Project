@@ -1,22 +1,35 @@
+import os
 import pymongo
-import io
 import base64
-from flask import Flask, request, jsonify, send_file
-from flask import Response
-from bson.json_util import dumps
-from flask import Flask, request, jsonify
+import io
+from dotenv import load_dotenv
+from base64 import b64encode
+from flask import Flask, request, jsonify, send_file, Response
+from flask_cors import CORS
 from datetime import datetime, timedelta
 from bson.objectid import ObjectId
-from base64 import b64encode
-from flask_cors import CORS
-import gridfs
-from flask import send_file
-app = Flask(__name__)
-CORS(app)  # Allow all cross-origin requests (for dev only)
+from bson.binary import Binary
+from bson.json_util import dumps
+
+
+load_dotenv()
+MONGO_URI = os.getenv("MONGO_URI")
+if not MONGO_URI:
+    raise ValueError("Missing MONGO_URI in .env file")
+
+
+client = pymongo.MongoClient(MONGO_URI)
+db = client["test"]
+
+try:
+    client.admin.command('ping')
+    print("Connected to MongoDB")
+except Exception as e:
+    print("MongoDB connection error:", e)
 
 
 app = Flask(__name__)
-
+CORS(app)
 
 @app.after_request
 def after_request(response):
@@ -24,11 +37,6 @@ def after_request(response):
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
     return response
-
-
-client = pymongo.MongoClient(
-    "mongodb+srv://nweikl:qyQrov-gyxsi1-dejtov@csis3750.auwttdg.mongodb.net/csis3750_db?retryWrites=true&w=majority&appName=csis3750")
-db = client["test"]
 
 
 try:
@@ -57,33 +65,32 @@ def login():
     password = data.get('password')
 
     if not all([university, email, password]):
-        # return jsonify({"error": "university, email, and password are required"}), 400
         print("Invalid data")
         return jsonify({"error": "Invalid data"}), 401
 
-    # Look up the user by university + email
+    
     user = db.users.find_one({
         "university": university,
         "email": email
     })
     if not user:
-        # return jsonify({"error": "Invalid credentials"}), 401
+        
         print("User not found")
         return jsonify({"error": "User not found"}), 401
 
-    # Plaintext check
-    stored_pw = user.get('password')  # assumes your documents have a 'password' field
+    
+    stored_pw = user.get('password')  
     if stored_pw != password:
-        # return jsonify({"error": "Invalid credentials"}), 401
+        
         print("Wrong password")
         return jsonify({"error": "Wrong password"}), 401
 
-    # Success
+  
     return jsonify({
         "message": "Login successful",
         "student_id": str(user['_id']),
         "username": user.get('username'),
-        "firstName": user.get('firstName'),  # Safely gets 'username'
+        "firstName": user.get('firstName'),  
     }), 200
 
 
@@ -95,31 +102,27 @@ def serialize_doc(doc):
         doc['dueDate'] = doc['dueDate'].isoformat()
     return doc
 
+@app.route('/assignments/student/<username>/todo', methods=['GET'])
+def get_student_todo(username):
+    now = datetime.utcnow()
+    tomorrow = now + timedelta(days=1)
 
-@app.route('/test/student/<username>/todo', methods=['GET'])
-def get_todo(username):
-    try:
-        now = datetime.utcnow()
-        start_today = datetime(now.year, now.month, now.day)
-        end_tomorrow = start_today + timedelta(days=2)
+    raw_tasks = db.assignments.find({
+        "username": username,
+        "dueDate": {"$gte": now, "$lte": tomorrow}
+    })
 
-        assignments = list(db.assignments.find({
-            "username": username,
-            "dueDate": {
-                "$gte": start_today,
-                "$lt": end_tomorrow
-            }
-        }))
+    tasks = []
+    for task in raw_tasks:
+        task['_id'] = str(task['_id'])  
+        task['dueDate'] = task['dueDate'].isoformat() if 'dueDate' in task else None
 
-        for assignment in assignments:
-            assignment["_id"] = str(assignment["_id"])
-            assignment["dueDate"] = assignment["dueDate"].isoformat()
+        
+        task.pop('uploadedFileData', None)
 
-        return jsonify(assignments), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        tasks.append(task)
 
-
+    return jsonify(tasks)
 @app.route('/test/users/<string:username>', methods=['GET', 'PUT'])
 def student_profile(username):
     if request.method == 'GET':
@@ -150,7 +153,7 @@ def get_courses_by_username(username):
 @app.route('/test/teacherclasses/<string:courseName>/<string:teacherUsername>', methods=['GET'])
 def get_teacherclass_students(courseName, teacherUsername):
     try:
-        # Get the teacher's document
+        
         teacher_doc = db.teacherclasses.find_one({
             "teacherUsername": teacherUsername,
             "courses.courseName": courseName
@@ -159,14 +162,14 @@ def get_teacherclass_students(courseName, teacherUsername):
         if not teacher_doc:
             return jsonify({"error": "Teacher or course not found"}), 404
 
-        # Find the course object from their list
+        
         course = next((c for c in teacher_doc['courses'] if c['courseName'] == courseName), None)
         if not course:
             return jsonify({"error": "Course not found in teacher's list"}), 404
 
         student_usernames = course.get("students", [])
 
-        # Fetch student details from the users collection
+        
         users = list(db.users.find({"username": {"$in": student_usernames}}))
         result = [
             {
@@ -231,7 +234,7 @@ def get_assignments_by_user_and_course(username, courseName):
 @app.route('/test/announcements/<string:username>/<string:courseName>', methods=['GET'])
 def get_announcements(username, courseName):
     try:
-        # Check if user is a student in the course
+        
         teacher_doc = db.teacherclasses.find_one({
             "courses.courseName": courseName,
             "courses.students": username
@@ -240,7 +243,7 @@ def get_announcements(username, courseName):
         if not teacher_doc:
             return jsonify({"error": "User not enrolled in this course"}), 403
 
-        # Return all announcements for the course
+        
         announcements = list(db.announcements.find({
             "courseName": {"$regex": f"^{courseName}$", "$options": "i"}
         }))
@@ -272,22 +275,22 @@ def update_assignment_marks():
         return jsonify({"error": "Update failed or no change made"}), 400
 
 
-# ✅ Post an announcement with title support
+
 @app.route('/test/announcements', methods=['POST'])
 def post_announcement():
     try:
         data = request.json
 
-        # ✅ Validate required fields including "title"
+        
         if not all(k in data for k in ("username", "courseName", "message", "title")):
             return jsonify({"error": "Missing fields"}), 400
 
         announcement = {
             "username": data["username"],
             "courseName": data["courseName"],
-            "title": data["title"],  # ✅ Add title here
+            "title": data["title"],  
             "message": data["message"],
-            "createdAt": datetime.now()  # ✅ Store timestamp
+            "createdAt": datetime.now() 
         }
 
         db.announcements.insert_one(announcement)
@@ -296,7 +299,7 @@ def post_announcement():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-#To add assignments in the database 
+
 @app.route('/test/assignments', methods=['POST'])
 def create_assignment():
     data = request.get_json()
@@ -308,7 +311,7 @@ def create_assignment():
     course_name = data['courseName']
     teacher_username = data['username']
 
-    # Find the teacher's course from teacherclasses
+    
     teacher_doc = db.teacherclasses.find_one({
         "teacherUsername": teacher_username,
         "courses.courseName": course_name
@@ -331,7 +334,7 @@ def create_assignment():
             "name": data['name'],
             "description": data['description'],
             "totalMarks": data['totalMarks'],
-            "dueDate": datetime.fromisoformat(data['dueDate']),  # ✅ handles full datetime
+            "dueDate": datetime.fromisoformat(data['dueDate']),  
             "courseName": course_name,
             "username": username,
             "createdAt": datetime.utcnow(),
@@ -347,9 +350,9 @@ def create_assignment():
         "insertedIds": inserted_ids
     }), 201
 
-from bson.binary import Binary  # Make sure this import is at the top
+from bson.binary import Binary  
 
-#Upload an assignment 
+
 @app.route("/test/assignments/upload", methods=["POST"])
 def upload_assignment():
     username = request.form.get("username")
@@ -381,17 +384,17 @@ from bson import ObjectId
 @app.route('/test/assignments/submissions/<string:courseName>/<string:assignmentName>', methods=['GET'])
 def get_assignment_submissions(courseName, assignmentName):
     try:
-        # Find all assignments with a file uploaded
+        
         submissions = list(db.assignments.find({
             "courseName": courseName,
             "name": assignmentName,
             "uploadedFileName": {"$ne": ""}
         }))
 
-        # Extract all usernames
+        
         usernames = [s["username"] for s in submissions]
 
-        # Get full name info for each username
+        
         user_details = list(db.users.find({"username": {"$in": usernames}}))
         user_map = {
             u["username"]: {
@@ -400,7 +403,7 @@ def get_assignment_submissions(courseName, assignmentName):
             } for u in user_details
         }
 
-        # Format response and strip unneeded/binary fields
+        
         response = []
         for s in submissions:
             response.append({
@@ -417,7 +420,7 @@ def get_assignment_submissions(courseName, assignmentName):
         return jsonify({"error": str(e)}), 500
 
 
-#download an assignment
+
 @app.route("/test/assignments/download/<string:username>/<string:courseName>/<string:assignmentName>", methods=["GET"])
 def download_assignment(username, courseName, assignmentName):
     doc = db.assignments.find_one({
@@ -435,7 +438,7 @@ def download_assignment(username, courseName, assignmentName):
         "fileData": encoded_data
     }), 200
 
-#get announcement
+
 @app.route('/test/announcements/course/<string:courseName>', methods=['GET'])
 def get_announcements_by_course(courseName):
     try:
@@ -447,18 +450,18 @@ def get_announcements_by_course(courseName):
         return jsonify({"error": str(e)}), 500
 @app.route('/syllabus/upload', methods=['POST'])
 def upload_syllabus():
-    # Expecting multipart/form-data with both fields
+    
     courseName = request.form.get('courseName')
     file       = request.files.get('file')
     if not courseName or not file:
         return jsonify({"error": "Missing courseName or file"}), 400
 
-    # Read & base64-encode
+    
     data = file.read()
     b64  = b64encode(data).decode('utf-8')
     dataUri = f"data:{file.mimetype};base64,{b64}"
 
-    # Upsert single document per courseName
+    
     db.syllabus.update_one(
         {"courseName": courseName},
         {"$set": {
@@ -475,14 +478,14 @@ def upload_syllabus():
     }), 201
 
 
-# ─── DOWNLOAD ───────────────────────────────────────────────────────────────
+
 @app.route('/syllabus/download/<string:courseName>', methods=['GET'])
 def download_syllabus(courseName):
     doc = db.syllabus.find_one({"courseName": courseName})
     if not doc:
         return jsonify({"error": "Syllabus not found"}), 404
 
-    # split off the data URI header
+    
     header, b64data = doc["syllabusDataUri"].split(",", 1)
     raw = base64.b64decode(b64data)
 

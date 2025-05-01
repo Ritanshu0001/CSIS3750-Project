@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
-// Importing routes
+
 const userRoutes = require('./routes/userRoutes');
 const courseRoutes = require('./routes/courseRoutes');
 const discussionRoutes = require('./routes/discussionRoutes');
@@ -11,14 +11,14 @@ const assessmentRoutes = require('./routes/assessmentRoutes');
 const progressRoutes = require('./routes/progressRoutes');
 const assignmentRoutes = require('./routes/assignmentRoutes');
 
-// Create the Express application
+
 const app = express();
 
-// MongoDB URI from environment variables
-const dbUri = process.env.MONGODB_URI;
-console.log('Attempting to connect to MongoDB with URI:', dbUri); // Debugging URI
 
-// Async function to connect to the database
+const dbUri = process.env.MONGODB_URI;
+console.log('Attempting to connect to MongoDB with URI:', dbUri); 
+
+
 async function connectDatabase() {
     try {
         await mongoose.connect(dbUri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -28,12 +28,12 @@ async function connectDatabase() {
     }
 }
 
-// Connect to MongoDB
+
 connectDatabase();
 
-// Middleware
-app.use(cors()); // Enable CORS
-app.use(express.json()); // Parse JSON bodies
+
+app.use(cors()); 
+app.use(express.json()); 
 
 // Use routes
 app.use('/api/users', userRoutes);

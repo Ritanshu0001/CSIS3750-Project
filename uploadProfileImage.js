@@ -1,23 +1,23 @@
-// uploadProfileImage.js
+
 
 const fs = require('fs');
 const { MongoClient } = require('mongodb');
 
-// ✅ Config: Replace this only if you change DB/collection/image
+
 const uri = 'mongodb+srv://ritanshu:Qwertyuiop%401@csis3750.auwttdg.mongodb.net/?retryWrites=true&w=majority&appName=csis3750';
-const dbName = 'test';            // Your MongoDB database name
-const collectionName = 'users';          // Your users collection
-const usernameToUpdate = 'teacher';       // Username to update
-const imagePath = './3.jpeg';       // Path to your local image file
+const dbName = 'test';            
+const collectionName = 'users';          
+const usernameToUpdate = 'teacher';       
+const imagePath = './3.jpeg';       
 
 async function run() {
   try {
-    console.log('📸 Reading image...');
+    console.log('Reading image...');
     const imageBuffer = fs.readFileSync(imagePath);
     const base64Image = imageBuffer.toString('base64');
     const dataUri = `data:image/png;base64,${base64Image}`;
 
-    console.log('🛠️ Connecting to MongoDB...');
+    console.log('Connecting to MongoDB...');
     const client = new MongoClient(uri);
     await client.connect();
     const db = client.db(dbName);
@@ -28,14 +28,14 @@ async function run() {
     );
 
     if (result.modifiedCount > 0) {
-      console.log('✅ Profile image uploaded successfully!');
+      console.log('Profile image uploaded successfully!');
     } else {
-      console.log('⚠️ No user found with that username.');
+      console.log('No user found with that username.');
     }
 
     await client.close();
   } catch (err) {
-    console.error('❌ Error:', err);
+    console.error('Error:', err);
   }
 }
 

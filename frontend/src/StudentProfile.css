@@ -5,7 +5,10 @@
 .assignment-boxes {
   display: auto;
   flex-direction: column;
-  gap: 10px;   /* reduced from 30px for tighter spacing */
+  gap: 10px; 
+  max-height: 85vh;
+  overflow-y: auto;
+  scroll-behavior: smooth;
 }
 
 .assignment-box {

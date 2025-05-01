@@ -73,7 +73,7 @@ export default function StudentProfile() {
           {assignments.map((a) => (
             <div className="assignment-box" key={a._id}>
               <div className="assignment-info">
-                <strong>{a.name}</strong> - {a.description}
+                <strong>{a.name}</strong>
                 <div className="assignment-marks">
                   (Marks: {a.totalMarks}, Obtained:{' '}
                   {a.marksObtained !== undefined && a.marksObtained !== null
@@ -98,8 +98,3 @@ export default function StudentProfile() {
     </div>
   );
 }
-
-
-
-
-

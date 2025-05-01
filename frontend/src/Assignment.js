@@ -14,7 +14,7 @@ export default function Assignment() {
   const isTeacher = email && email.endsWith('@nova.edu');
 
   useEffect(() => {
-    const targetUsername = isTeacher ? 'teacher' : loggedInUsername;
+    const targetUsername = loggedInUsername; 
     fetch(`http://localhost:5000/test/assignments/${targetUsername}/${encodeURIComponent(courseName)}`)
       .then(res => res.json())
       .then(data => {
@@ -28,7 +28,7 @@ export default function Assignment() {
         console.error("Error fetching assignment:", err);
         setLoading(false);
       });
-  }, [isTeacher, loggedInUsername, courseName, assignmentName]);
+  }, [loggedInUsername, courseName, assignmentName]);
 
   useEffect(() => {
     if (isTeacher) {
@@ -70,17 +70,21 @@ export default function Assignment() {
   };
 
   const handleDownload = async (studentUsername) => {
-    const res = await fetch(`http://localhost:5000/test/assignments/download/${studentUsername}/${encodeURIComponent(courseName)}/${assignmentName}`);
-    const data = await res.json();
-    if (res.ok && data.fileData) {
-      const link = document.createElement('a');
-      link.href = `data:application/octet-stream;base64,${data.fileData}`;
-      link.download = data.filename || `${studentUsername}_submission`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else {
-      alert("Download failed.");
+    try {
+      const res = await fetch(`http://localhost:5000/test/assignments/download/${studentUsername}/${encodeURIComponent(courseName)}/${assignmentName}`);
+      const data = await res.json();
+      if (res.ok && data.fileData) {
+        const link = document.createElement('a');
+        link.href = `data:application/octet-stream;base64,${data.fileData}`;
+        link.download = data.filename || `${studentUsername}_submission`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        alert("Download failed.");
+      }
+    } catch (err) {
+      alert("Download failed: " + err.message);
     }
   };
 

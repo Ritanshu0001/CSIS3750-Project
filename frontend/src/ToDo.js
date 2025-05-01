@@ -9,7 +9,7 @@ export default function ToDo() {
   useEffect(() => {
     const fetchAssignments = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/test/student/${username}/todo`);
+        const res = await fetch(`http://localhost:5000/assignments/student/${username}/todo`);
         const data = await res.json();
 
         if (!res.ok) {
@@ -21,22 +21,24 @@ export default function ToDo() {
         const tomorrow = [];
 
         const now = new Date();
-        const todayStr = now.toDateString(); // readable form
-        const tomorrowStr = new Date(now.getTime() + 86400000).toDateString(); // +1 day
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const tomorrowStart = new Date(todayStart);
+        tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+        const dayAfterTomorrow = new Date(tomorrowStart);
+        dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 1);
 
         data.forEach(task => {
-          const dueDate = new Date(task.dueDate);
-          const dueStr = dueDate.toDateString();
+          if (!task.dueDate) return;
 
+          const dueDate = new Date(task.dueDate);
           const formatted = {
-            title: task.name || task.title || "Untitled",
-            due: dueDate.toLocaleDateString(),
-            notes: task.description || "No description provided"
+            title: task.name || "Untitled",
+            due: dueDate.toLocaleString()
           };
 
-          if (dueStr === todayStr) {
+          if (dueDate >= todayStart && dueDate < tomorrowStart) {
             today.push(formatted);
-          } else if (dueStr === tomorrowStr) {
+          } else if (dueDate >= tomorrowStart && dueDate < dayAfterTomorrow) {
             tomorrow.push(formatted);
           }
         });
@@ -65,10 +67,9 @@ export default function ToDo() {
                   <h3>{task.title}</h3>
                   <ul>
                     <li><strong>Due:</strong> {task.due}</li>
-                    <li>{task.notes}</li>
                   </ul>
                 </div>
-                <img src="/class_img.png" alt="Task illustration" />
+                <img src="/class_img.png" alt="Task" />
               </div>
             ))
           ) : (
@@ -87,10 +88,9 @@ export default function ToDo() {
                   <h3>{task.title}</h3>
                   <ul>
                     <li><strong>Due:</strong> {task.due}</li>
-                    <li>{task.notes}</li>
                   </ul>
                 </div>
-                <img src="/class_img.png" alt="Task illustration" />
+                <img src="/class_img.png" alt="Task" />
               </div>
             ))
           ) : (

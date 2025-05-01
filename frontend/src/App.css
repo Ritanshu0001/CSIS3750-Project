@@ -1,8 +1,5 @@
-html, body {
+body {
   margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow-x: hidden;
   font-family: 'Segoe UI', sans-serif;
   background-color: #fabe2c;
 }
@@ -14,33 +11,24 @@ html, body {
   background-color: #fabe2c;
 }
 
+body, html {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow-x: hidden;
+  background-color: #fabe2c;
+}
+
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 20px 60px;
-  width: 100%;
   max-width: 1600px;
   margin: 0 auto;
-  background-color: #fabe2c;
-  box-shadow: none;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.logo-img {
-  height: 40px;
-  width: auto;
-}
-
-.logo-text {
-  font-size: 24px;
-  font-weight: bold;
-  color: #000;
+  width: 100%;
+  box-shadow: none !important;
+  background-color: #fabe2c !important;
 }
 
 .nav-links {
@@ -49,6 +37,15 @@ html, body {
   align-items: center;
   list-style: none;
   margin-left: auto;
+}
+
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .nav-links a {
@@ -68,37 +65,94 @@ html, body {
   cursor: pointer;
 }
 
+.hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  padding: 80px 0;
+  transform: translateY(+75px);
+  flex: 1;
+}
+
+
+.hero-left img {
+  max-width: 100%;
+  width: 600px;
+  height: auto;
+}
+
+.hero-right {
+  max-width: 500px;
+}
+
+.hero-right h1 {
+  font-size: 48px;
+  margin-bottom: 20px;
+  line-height: 1.2;
+}
+
+.hero-right p {
+  font-size: 20px;
+  margin-bottom: 30px;
+}
+
+.signin-filled {
+  padding: 14px 36px;
+  background-color: black;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 17px;
+  box-shadow: 3px 4px 0 #00000044;
+  transition: transform 0.1s ease;
+}
+
+.signin-filled:hover {
+  transform: translateY(-1px);
+  background-color: #222;
+}
+
+.quote {
+  margin-top: 80px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 18px;
+}
+
 .signin-wrapper {
+  flex: 1;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 80px;
+  gap: 100px;
   padding: 0 60px;
   background-color: #fabe2c;
   box-sizing: border-box;
-  min-height: calc(100vh - 80px);
+  height: 100%;
 }
 
 .signin-left img {
   width: 320px;
   height: auto;
   object-fit: contain;
-  transform: none;
-  margin: 0;
+  transform: translate(-50px, +150px);
+
 }
 
 .signin-right {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  width: 360px;
-  margin: 0;
-  transform: none;
+  transform: translate(-50px, +150px);
 }
 
 .signin-icon {
   font-size: 40px;
-  margin-bottom: 30px;
+  margin: 0 auto 30px;
 }
 
 .signin-right h2 {
@@ -107,37 +161,16 @@ html, body {
   margin-bottom: 20px;
 }
 
-.signin-right form {
+.signin-right input {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-
-.signin-right input,
-.password-field input {
-  width: 100%;
-  padding: 15px 20px;
-  margin-bottom: 16px;
-  border: none;
+  padding: 15px;
   border-radius: 20px;
+  border: none;
+  margin-bottom: 20px;
   font-size: 16px;
   box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
   outline: none;
   box-sizing: border-box;
-}
-
-.password-field {
-  position: relative;
-}
-
-.password-field input {
-  padding-right: 45px;
-}
-
-.signin-right input:focus,
-.password-field input:focus {
-  box-shadow: inset 0 0 0 2px #222;
 }
 
 .signin-filled {
@@ -150,19 +183,39 @@ html, body {
   font-size: 16px;
   cursor: pointer;
   box-shadow: 3px 4px 0 #00000044;
-  transition: transform 0.1s ease;
-  margin-top: 8px;
+  margin-top: 10px;
 }
 
-.signin-filled:hover {
-  transform: translateY(-1px);
-  background-color: #222;
-}
 
 .signup-text {
   margin-top: 20px;
   font-size: 14px;
+}
+
+.password-field {
+  position: relative;
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.password-field input {
+  width: 100%;
+  padding: 15px;
+  border-radius: 20px;
+  border: none;
+  font-size: 16px;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.2);
+  outline: none;
+  box-sizing: border-box;
+  padding-right: 45px;
+}
+
+.quote {
+  margin-top: 80px;
   text-align: center;
+  font-weight: 600;
+  font-size: 18px;
+  margin-bottom: 40px;
 }
 
 .dropdown-wrapper {
@@ -185,13 +238,4 @@ html, body {
   border: none;
   font-weight: bold;
   cursor: pointer;
-}
-
-.footer {
-  margin: 40px 0;
-  width: 100%;
-  text-align: center;
-  font-weight: bold;
-  font-size: 20px;
-  color: #000;
 }

@@ -22,7 +22,7 @@ const teacherSchema = new mongoose.Schema(
         },
         students: [
           {
-            type: String, // student username
+            type: String, 
             trim: true
           }
         ]

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import './Course.css'; // Ensure styles for .assignment-form are present if needed
+import './Course.css'; 
 
 export default function Course() {
   const { username, courseName } = useParams();
@@ -12,11 +12,10 @@ export default function Course() {
   const [students, setStudents] = useState([]);
   const [newAnnouncement, setNewAnnouncement] = useState('');
   const [newTitle, setNewTitle] = useState('');
-  // ─────────────────────────────────────────────────────────────────────────────
-  // new state for syllabus upload:
+  
   const [syllabusFile, setSyllabusFile] = useState(null);
   const [syllabusName, setSyllabusName] = useState('');
-  // ─────────────────────────────────────────────────────────────────────────────
+  
 
   const [newAssignment, setNewAssignment] = useState({
     name: '',
@@ -29,7 +28,7 @@ export default function Course() {
   const email = localStorage.getItem('email');
   const isTeacher = email && email.endsWith('@nova.edu');
 
-  // ─── CLEAR OUT STALE DATA WHEN SWITCHING TABS ─────────────────────────────────
+  
   useEffect(() => {
     if (!['Assignments', 'Grades'].includes(activeTab)) {
       setAssignments([]);
@@ -42,7 +41,7 @@ export default function Course() {
     }
   }, [activeTab]);
 
-  // ─── FETCH ASSIGNMENTS (for the Assignments & Grades tabs ONLY) ────────────
+  
   useEffect(() => {
     if (['Assignments', 'Grades'].includes(activeTab)) {
       fetch(
@@ -56,7 +55,7 @@ export default function Course() {
     }
   }, [activeTab, username, courseName]);
 
-  // ─── FETCH ANNOUNCEMENTS (for the Announcements tab ONLY) ─────────────────
+  
   useEffect(() => {
     if (activeTab === 'Announcements') {
       const url = isTeacher
@@ -74,7 +73,7 @@ export default function Course() {
     }
   }, [activeTab, username, courseName, isTeacher]);
 
-  // ─── FETCH STUDENTS (for the Students tab ONLY) ───────────────────────────
+  
   useEffect(() => {
     if (isTeacher && activeTab === 'Students') {
       fetch(
@@ -88,7 +87,7 @@ export default function Course() {
     }
   }, [activeTab, isTeacher, username, courseName]);
 
-  // ─── Handle submitting a new announcement ────────────────────────────────────
+  
   const handleAnnouncementSubmit = async (e) => {
     e.preventDefault();
     const payload = {
@@ -121,12 +120,12 @@ export default function Course() {
     }
   };
 
-  // ─── Navigate to a student's profile ────────────────────────────────────────
+  
   const handleViewStudent = (studentUsername) => {
     navigate(`/course/${courseName}/students/${studentUsername}`);
   };
 
-  // ─── Reset & switch to Add Assignment tab ───────────────────────────────────
+  
   const goToAddAssignmentTab = () => {
     setNewAssignment({
       name: '',
@@ -138,13 +137,13 @@ export default function Course() {
     setActiveTab('AddAssignment');
   };
 
-  // ─── Generic handler for controlled form inputs ─────────────────────────────
+  
   const handleAssignmentChange = (e) => {
     const { name, value } = e.target;
     setNewAssignment((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ─── SYLLABUS CHANGE & UPLOAD HANDLERS ─────────────────────────────────────
+  
   const handleSyllabusChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -175,17 +174,17 @@ export default function Course() {
         setSyllabusName('');
       } else {
         const err = await res.json();
-        alert('⚠️ Upload failed: ' + (err.error || res.statusText));
+        alert('Upload failed: ' + (err.error || res.statusText));
       }
     } catch (e) {
-      alert('❌ Error uploading: ' + e.message);
+      alert('Error uploading: ' + e.message);
     }
   };
 
-  // ─── Render content based on the active tab ─────────────────────────────────
+  
   const renderContent = () => {
     switch (activeTab) {
-      // ──────────────────────────────────────────────────────────────────────────
+      
       case 'Home':
         return (
           <>
@@ -209,7 +208,7 @@ export default function Course() {
           </>
         );
 
-      // ──────────────────────────────────────────────────────────────────────────
+      
       case 'Assignments':
         return (
           <>
@@ -276,7 +275,7 @@ export default function Course() {
           </>
         );
 
-      // ──────────────────────────────────────────────────────────────────────────
+      
       case 'AddAssignment':
         return (
           <div className="assignment-form">
@@ -405,7 +404,7 @@ export default function Course() {
           </div>
         );
 
-      // ──────────────────────────────────────────────────────────────────────────
+      
       case 'Announcements':
         return (
           <>
@@ -453,7 +452,7 @@ export default function Course() {
           </>
         );
 
-      // ──────────────────────────────────────────────────────────────────────────
+      
       case 'Grades':
         const totalScored = assignments.reduce((sum, a) => sum + (a.marksObtained || 0), 0);
         const totalPossible = assignments.reduce((sum, a) => sum + (a.totalMarks || 0), 0);
@@ -487,7 +486,7 @@ export default function Course() {
           </>
         );
 
-      // ──────────────────────────────────────────────────────────────────────────
+      
       case 'Students':
         return (
           <>
@@ -520,7 +519,7 @@ export default function Course() {
           </>
         );
 
-      // ──────────────────────────────────────────────────────────────────────────
+      
       case 'Syllabus':
         return (
           <>
@@ -529,11 +528,11 @@ export default function Course() {
             {isTeacher && (
               <form
                 className="syllabus-form"
-                onSubmit={handleSyllabusUpload}   // ← this must be present
+                onSubmit={handleSyllabusUpload}   
               >
                 <input
                   type="file"
-                  onChange={handleSyllabusChange}  // ← and this too
+                  onChange={handleSyllabusChange}  
                 />
                 <button type="submit" className="submit-btn">
                   Upload Syllabus
@@ -554,7 +553,7 @@ export default function Course() {
           </>
         );
 
-      // ──────────────────────────────────────────────────────────────────────────
+      
       default:
         return <h2>Welcome to {courseName}</h2>;
     }
@@ -587,18 +586,18 @@ export default function Course() {
 
       <main className="course-content">{renderContent()}</main>
 
-      {/* Contextual Cards */}
+      
       {activeTab === 'Home' && (
         <div className="instructor-card">
           <img src="/professor.png" alt="Instructor" />
-          <h3>Professor Muhammad</h3>
+          <h3>Professor </h3>
           <p>
-            Canvas Inbox: Response time within 24–48 hours M–F.
+            Email Inbox: Response time within 24–48 hours M–F.
             <br />
             Office Hours: By appointment
             <br />
             <br />
-            Canvas Help:
+            BrighBoard Help:
             <br />• 1-844-865-2568
             <br />
             • Chat, Help Guides, Support Portal
@@ -610,9 +609,9 @@ export default function Course() {
           <img src="/assignment.png" alt="Assignments" />
           <h3>Assignment Info</h3>
           <p>
-            • Submit through Canvas
+            • Submit by clicking n the assignment 
             <br />
-            • Allowed formats: .docx, .pdf
+            • Allowed any format
             <br />
             • Late work may not be accepted
           </p>
@@ -621,7 +620,7 @@ export default function Course() {
       {activeTab === 'Announcements' && (
         <div className="instructor-card">
           <img src="/professor.png" alt="Announcements" />
-          <h3>Professor Muhammad</h3>
+          <h3>Professor </h3>
           <p>
             • Check announcements weekly
             <br />
@@ -655,7 +654,7 @@ export default function Course() {
             <br />
             • Click 'View Profile' for details.
             <br />
-            • Use for communication and grading.
+            • Use for grading.
           </p>
         </div>
       )}

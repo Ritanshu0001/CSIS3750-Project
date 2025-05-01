@@ -5,11 +5,11 @@ const syllabusSchema = new Schema({
   courseName: {
     type: String,
     required: true,
-    unique: true,      // one syllabus per course
+    unique: true,      
     trim: true,
   },
 
-  // store either a URL/relative path or, if you prefer, the GridFS ObjectId
+  
   pdfPath: {
     type: String,
     required: true,
